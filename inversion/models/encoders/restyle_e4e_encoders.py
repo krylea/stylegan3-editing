@@ -25,7 +25,7 @@ class ProgressiveStage(Enum):
     Delta13Training = 13
     Delta14Training = 14
     Delta15Training = 15
-    Inference = 16
+    Inference = -1
 
 
 class ProgressiveBackboneEncoder(Module):

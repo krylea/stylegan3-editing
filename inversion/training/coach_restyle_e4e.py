@@ -309,7 +309,7 @@ class Coach:
             loss += self.opts.w_discriminator_lambda * loss_disc
 
         # delta regularization loss
-        if self.opts.progressive_steps and self.net.encoder.progressive_stage.value != 16:
+        if self.opts.progressive_steps and self.net.encoder.progressive_stage.value != self.n_styles:
             total_delta_loss = self.compute_delta_regularization_loss(latent, loss_dict)
             loss += self.opts.delta_norm_lambda * total_delta_loss
 
