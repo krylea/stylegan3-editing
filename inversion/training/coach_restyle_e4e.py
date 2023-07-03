@@ -39,8 +39,10 @@ class Coach:
         if self.net.latent_avg is None:
             self.net.latent_avg = self.net.decoder.mapping.w_avg
 
+        self.n_styles = self.opts.n_styles
+
         # get the image corresponding to the latent average
-        self.avg_image = self.net(self.net.latent_avg.repeat(16, 1).unsqueeze(0),
+        self.avg_image = self.net(self.net.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),
                                   input_code=True,
                                   return_latents=False)[0]
         self.avg_image = self.avg_image.to(self.device).float().detach()
@@ -336,7 +338,7 @@ class Coach:
 
     def compute_adversarial_loss(self, latent: torch.tensor, loss_dict: Dict[str, float]):
         loss_disc = 0.
-        dims_to_discriminate = self.get_dims_to_discriminate() if self.is_progressive_training() else list(range(16))
+        dims_to_discriminate = self.get_dims_to_discriminate() if self.is_progressive_training() else list(range(self.n_styles))
         for i in dims_to_discriminate:
             w = latent[:, i, :]
             fake_pred = self.discriminator(w)
@@ -428,9 +430,9 @@ class Coach:
     def check_for_progressive_training_update(self, is_resume_from_ckpt: bool = False):
         for i in range(len(self.opts.progressive_steps)):
             if is_resume_from_ckpt and self.global_step >= self.opts.progressive_steps[i]:  # Case checkpoint
-                self.net.encoder.set_progressive_stage(ProgressiveStage(i))
+                self.net.encoder.set_progressive_stage(i)
             if self.global_step == self.opts.progressive_steps[i]:  # Case training reached progressive step
-                self.net.encoder.set_progressive_stage(ProgressiveStage(i))
+                self.net.encoder.set_progressive_stage(i)
 
     @staticmethod
     def requires_grad(model: nn.Module, flag: bool = True):

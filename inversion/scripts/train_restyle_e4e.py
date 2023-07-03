@@ -47,7 +47,7 @@ def load_train_checkpoint(opts: e4eTrainOptions):
 
 
 def setup_progressive_steps(opts: e4eTrainOptions):
-	num_style_layers = 16
+	num_style_layers = opts.n_styles
 	num_deltas = num_style_layers - 1
 	if opts.progressive_start is not None:  # If progressive delta training
 		opts.progressive_steps = [0]

@@ -13,7 +13,7 @@ class e4e(nn.Module):
         super(e4e, self).__init__()
         self.set_opts(opts)
         # Define architecture
-        self.decoder, self.n_styles = self.set_decoder()
+        self.n_styles = opts.n_styles
         self.encoder = self.set_encoder()
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
         # Load weights if needed
@@ -28,26 +28,18 @@ class e4e(nn.Module):
             raise Exception(f'{self.opts.encoder_type} is not a valid encoders')
         return encoder
 
-    def set_decoder(self):
-        if self.opts.checkpoint_path is not None:
-            decoder = SG3Generator(checkpoint_path=None).decoder
-        else:
-            decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
-        n_styles = decoder.num_ws
-        return decoder, n_styles
-
     def load_weights(self):
         if self.opts.checkpoint_path is not None:
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
-            #self.decoder = SG3Generator(checkpoint_path=None).decoder
+            self.decoder = SG3Generator(checkpoint_path=None).decoder
             self.decoder.load_state_dict(self._get_keys(ckpt, 'decoder', remove=["synthesis.input.transform"]), strict=False)
             self._load_latent_avg(ckpt)
         else:
             encoder_ckpt = self._get_encoder_checkpoint()
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
-            #self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
+            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
             self.latent_avg = self.decoder.mapping.w_avg
 
     def forward(self, x, latent=None, resize=True, input_code=False, landmarks_transform=None,

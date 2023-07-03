@@ -67,7 +67,7 @@ class ProgressiveBackboneEncoder(Module):
         ''' Get a list of the initial dimension of every delta from which it is applied '''
         return list(range(self.style_count))  # Each dimension has a delta applied to
 
-    def set_progressive_stage(self, new_stage: ProgressiveStage):
+    def set_progressive_stage(self, new_stage):
         #  In this encoder we train all the pyramid (At least as a first stage experiment
         self.progressive_stage = new_stage
         print('Changed progressive stage to: ', new_stage)
@@ -81,7 +81,7 @@ class ProgressiveBackboneEncoder(Module):
         w = w0.repeat(self.style_count, 1, 1).permute(1, 0, 2)
 
         # learn the deltas up to the current stage
-        stage = self.progressive_stage.value
+        stage = self.progressive_stage
         for i in range(1, min(stage + 1, self.style_count)):
             delta_i = self.styles[i](x)
             w[:, i] += delta_i
@@ -125,7 +125,7 @@ class ResNetProgressiveBackboneEncoder(Module):
         ''' Get a list of the initial dimension of every delta from which it is applied '''
         return list(range(self.style_count))  # Each dimension has a delta applied to
 
-    def set_progressive_stage(self, new_stage: ProgressiveStage):
+    def set_progressive_stage(self, new_stage):
         #  In this encoder we train all the pyramid (At least as a first stage experiment
         self.progressive_stage = new_stage
         print('Changed progressive stage to: ', new_stage)
@@ -141,7 +141,7 @@ class ResNetProgressiveBackboneEncoder(Module):
         w = w0.repeat(self.style_count, 1, 1).permute(1, 0, 2)
 
         # learn the deltas up to the current stage
-        stage = self.progressive_stage.value
+        stage = self.progressive_stage
         for i in range(1, min(stage + 1, self.style_count)):
             delta_i = self.styles[i](x)
             w[:, i] += delta_i
