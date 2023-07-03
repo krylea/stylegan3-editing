@@ -12,6 +12,7 @@ class TrainOptions:
     """ General Args """
     # Path to experiment output directory
     exp_dir: Path = "./experiments/experiment"
+    ckpt_dir: Path = "/checkpoint/kaselby/experiment"
     # Type of dataset/experiment to run
     dataset_type: str = "ffhq_encode"
     # Which encoder to use

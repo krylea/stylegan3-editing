@@ -7,6 +7,7 @@ from typing import Any
 import dataclasses
 import pyrallis
 import torch
+import os
 
 sys.path.append(".")
 sys.path.append("..")
@@ -18,7 +19,7 @@ from inversion.training.coach_restyle_e4e import Coach
 @pyrallis.wrap()
 def main(opts: e4eTrainOptions):
 	previous_train_ckpt = None
-	if opts.resume_training_from_ckpt:
+	if opts.resume_training_from_ckpt and os.path.exists(opts.resume_training_from_ckpt):
 		opts, previous_train_ckpt = load_train_checkpoint(opts)
 	else:
 		setup_progressive_steps(opts)
