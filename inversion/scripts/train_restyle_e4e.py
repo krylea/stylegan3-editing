@@ -1,7 +1,7 @@
 import json
 import pprint
 import sys
-from plistlib import Dict
+#from plistlib import Dict
 from typing import Any
 
 import dataclasses
@@ -71,7 +71,7 @@ def create_initial_experiment_dir(opts: e4eTrainOptions):
 		json.dump(opts_dict, f, indent=4, sort_keys=True, default=str)
 
 
-def update_new_configs(ckpt_opts: Dict[str, Any], new_opts: Dict[str, Any]):
+def update_new_configs(ckpt_opts, new_opts):
 	for k, v in new_opts.items():
 		ckpt_opts[k] = v
 
