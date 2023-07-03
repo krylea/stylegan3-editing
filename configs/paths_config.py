@@ -4,14 +4,16 @@ dataset_paths = {
 	'celeba_train': Path(''),
 	'celeba_test': Path(''),
 
-	'ffhq': Path(''),
-	'ffhq_unaligned': Path('')
+	'ffhq': Path('/ssd003/projects/ffhq/images1024x1024/'),
+	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/')
 }
 
 model_paths = {
 	# models for backbones and losses
 	'ir_se50': Path('pretrained_models/model_ir_se50.pth'),
 	# stylegan3 generators
+    'stylegan_xl_ffhq_256': Path('../stylegan-xl/pretrained_models/ffhq256.pkl'),
+    'stylegan_xl_ffhq_1024': Path('../stylegan-xl/pretrained_models/ffhq1024.pkl'),
 	'stylegan3_ffhq': Path('pretrained_models/stylegan3-r-ffhq-1024x1024.pkl'),
 	'stylegan3_ffhq_pt': Path('pretrained_models/sg3-r-ffhq-1024.pt'),
 	'stylegan3_ffhq_unaligned': Path('pretrained_models/stylegan3-r-ffhqu-1024x1024.pkl'),
