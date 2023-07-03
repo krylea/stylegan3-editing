@@ -11,7 +11,7 @@ import os
 
 sys.path.append(".")
 sys.path.append("..")
-sys.path.append('models/stylegan3/')
+sys.path.append('models/styleganxl/')
 
 from inversion.options.e4e_train_options import e4eTrainOptions
 from inversion.training.coach_restyle_e4e import Coach
