@@ -10,7 +10,7 @@
 
 name=$1
 
-python inversion/scripts/train_restyle_e4e.py \
+python3 inversion/scripts/train_restyle_e4e.py \
 --dataset_type ffhq_encode \
 --encoder_type ProgressiveBackboneEncoder \
 --exp_dir experiments/$name \
