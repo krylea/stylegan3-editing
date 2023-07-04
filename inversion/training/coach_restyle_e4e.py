@@ -503,7 +503,7 @@ class Coach:
             return loss_dict
 
     def sample_real_and_fake_latents(self, x: torch.tensor):
-        sample_z = torch.randn(x.shape[0], 512, device=self.device)
+        sample_z = torch.randn(x.shape[0], self.net.decoder.z_dim, device=self.device)
         c = torch.zeros([x.shape[0], self.net.decoder.c_dim], device=self.device)  # unconditional setting
         real_w = self.net.decoder.mapping(sample_z, c)
         fake_w = self.net.encoder(x)
