@@ -30,4 +30,5 @@ python3 inversion/scripts/train_restyle_e4e.py \
 --output_size 256 \
 --stylegan_weights ../stylegan-xl/pretrained_models/ffhq256.pkl \
 --save_interval 2000 \
---ckpt_dir /checkpoint/kaselby/$name
+--ckpt_dir /checkpoint/kaselby/$name \
+--n_styles 18

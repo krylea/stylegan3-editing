@@ -25,6 +25,8 @@ class e4eTrainOptions(TrainOptions):
     # Truncation psi for sampling real latents for discriminator
     truncation_psi: float = 1
 
+    n_styles: int = 18
+
     """ e4e modules args """
     # Norm type for delta loss
     delta_norm: int = 2
