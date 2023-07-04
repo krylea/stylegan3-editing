@@ -43,3 +43,5 @@ class e4eTrainOptions(TrainOptions):
     sub_exp_dir: Optional[str] = None
     resume_training_from_ckpt: Optional[Path] = None
     update_param_list: Optional[str] = None
+
+    sgxl: bool = False

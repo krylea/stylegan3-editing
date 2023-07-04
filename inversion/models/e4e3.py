@@ -61,7 +61,10 @@ class e4e(nn.Module):
 
         # generate the aligned images
         identity_transform = common.get_identity_transform()
-        identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
+        if not self.opts.sgxl:
+            identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
+        else:
+            identity_transform = torch.from_numpy(identity_transform).cuda().float()
         self.decoder.synthesis.input.transform = identity_transform
         images = self.decoder.synthesis(codes, noise_mode='const', force_fp32=True)
 
