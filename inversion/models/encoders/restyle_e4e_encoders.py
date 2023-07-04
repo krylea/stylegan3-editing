@@ -61,7 +61,7 @@ class ProgressiveBackboneEncoder(Module):
         for i in range(self.style_count):
             style = GradualStyleBlock(512, 512, 16)
             self.styles.append(style)
-        self.progressive_stage = ProgressiveStage.Inference
+        self.progressive_stage = 99
 
     def get_deltas_starting_dimensions(self):
         ''' Get a list of the initial dimension of every delta from which it is applied '''
@@ -119,7 +119,7 @@ class ResNetProgressiveBackboneEncoder(Module):
         for i in range(self.style_count):
             style = GradualStyleBlock(512, 512, 16)
             self.styles.append(style)
-        self.progressive_stage = ProgressiveStage.Inference
+        self.progressive_stage = 99
 
     def get_deltas_starting_dimensions(self):
         ''' Get a list of the initial dimension of every delta from which it is applied '''
