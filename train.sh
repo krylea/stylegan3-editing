@@ -32,4 +32,5 @@ python3 inversion/scripts/train_restyle_e4e.py \
 --save_interval 2000 \
 --ckpt_dir /checkpoint/kaselby/$name \
 --n_styles 18 \
---sgxl
+--sgxl \
+--resume_training_from_ckpt /checkpoint/kaselby/$name/checkpoint.pt
