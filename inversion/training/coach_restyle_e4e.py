@@ -78,8 +78,7 @@ class Coach:
                                            num_workers=int(self.opts.workers),
                                            drop_last=True)
         self.test_dataloader = DataLoader(self.test_dataset,
-                                          batch_size=se
-                                          lf.opts.test_batch_size,
+                                          batch_size=self.opts.test_batch_size,
                                           shuffle=False,
                                           num_workers=int(self.opts.test_workers),
                                           drop_last=False)

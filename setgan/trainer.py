@@ -153,11 +153,23 @@ class SetGANTrainer:
         yhats, latents = self.net(x, y0=avg_image_for_batch)
         outputs = {idx: [] for idx in range(x.shape[0])}
         for iter in range(self.opts.n_iters_per_batch):
-            loss, loss_dict, id_logs = self.calc_loss(x, y, y_hats[iter], latents[iter])
+            loss, loss_dict, id_logs = self.calc_loss(x, y, yhats[iter], latents[iter])
             loss.backward()
             # store intermediate outputs
             for idx in range(x.shape[0]):
-                outputs[idx].append([y_hat[idx], id_logs[idx]['diff_target']])
+                outputs[idx].append([yhats[iter][idx], id_logs[idx]['diff_target']])
+        return outputs, loss_dict, id_logs
+    
+    def val_step(self, x, y):
+        avg_image_for_batch = self.avg_image.unsqueeze(0).repeat(x.shape[0], 1, 1, 1, 1)
+        yhats, latents = self.net(x, y0=avg_image_for_batch)
+        outputs = {idx: [] for idx in range(x.shape[0])}
+        for iter in range(self.opts.n_iters_per_batch):
+            loss, loss_dict, id_logs = self.calc_loss(x, y, yhats[iter], latents[iter])
+            #loss.backward()
+            # store intermediate outputs
+            for idx in range(x.shape[0]):
+                outputs[idx].append([yhats[iter][idx], id_logs[idx]['diff_target']])
         return outputs, loss_dict, id_logs
 
 
@@ -176,7 +188,7 @@ class SetGANTrainer:
 
                 disc_loss_dict = self.compute_discriminator_loss(x)
 
-                y_hats, encoder_loss_dict, id_logs = self.perform_train_iteration_on_batch(x, y)
+                y_hats, encoder_loss_dict, id_logs = self.train_step(x, y)
 
                 # only update the optimizer after we've seen 8 examples
                 if batch_idx % int(8 / self.opts.batch_size) == 0:
@@ -254,7 +266,7 @@ class SetGANTrainer:
 
             # validate encoder on batch
             with torch.no_grad():
-                y_hats, cur_enc_loss_dict, id_logs = self.perform_val_iteration_on_batch(x, y)
+                y_hats, cur_enc_loss_dict, id_logs = self.val_step(x, y)
 
             cur_loss_dict = {**cur_disc_loss_dict, **cur_enc_loss_dict}
             agg_loss_dict.append(cur_loss_dict)
