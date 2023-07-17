@@ -147,10 +147,11 @@ class SetGANTrainer:
 
         return y_hats, loss_dict, id_logs
     '''
+    
 
-    def train_step(self, x, y):
+    def train_step(self, x, y, s):
         avg_image_for_batch = self.avg_image.unsqueeze(0).repeat(x.shape[0], 1, 1, 1, 1)
-        yhats, latents = self.net(x, y0=avg_image_for_batch)
+        yhats, latents = self.net(x, s, y0=avg_image_for_batch, iters=self.opts.n_iters_per_batch)
         outputs = {idx: [] for idx in range(x.shape[0])}
         for iter in range(self.opts.n_iters_per_batch):
             loss, loss_dict, id_logs = self.calc_loss(x, y, yhats[iter], latents[iter])
@@ -227,6 +228,7 @@ class SetGANTrainer:
                 if self.opts.progressive_steps:
                     self.check_for_progressive_training_update()
 
+    '''
     def perform_val_iteration_on_batch(self, x: torch.tensor, y: torch.tensor):
         y_hat, latent = None, None
         cur_loss_dict, id_logs = None, None
@@ -246,6 +248,7 @@ class SetGANTrainer:
                 y_hats[idx].append([y_hat[idx], id_logs[idx]['diff_target']])
 
         return y_hats, cur_loss_dict, id_logs
+    '''
 
     def validate(self):
         self.net.eval()
@@ -545,3 +548,10 @@ class SetGANTrainer:
         if fake_w.ndim == 3:
             fake_w = fake_w[:, 0, :]
         return real_w, fake_w
+    
+
+    def sample_real_latents(self, n):
+        sample_z = torch.randn(n, self.net.decoder.z_dim, device=self.device)
+        c = torch.zeros([n, self.net.decoder.c_dim], device=self.device)   # unconditional setting
+        real_w = self.net.decoder.mapping(sample_z, c)
+
