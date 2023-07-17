@@ -48,5 +48,7 @@ class SetGANTrainOptions(TrainOptions):
 
     restyle_mode: str = 'none'
 
+    train_encoder: bool = False
+
     """ args for using restyle """
     using_restyle: bool = False # default not using restyle
