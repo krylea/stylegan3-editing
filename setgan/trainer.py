@@ -24,7 +24,7 @@ from utils.ranger import Ranger
 from utils import common, train_utils
 
 from setgan.models.setgan import SetGAN
-
+from setgan.utils import to_images, to_set, to_imgset
 
 
 
@@ -477,9 +477,16 @@ class SetGANTrainer:
         return self.opts.w_discriminator_lambda > 0
 
     @staticmethod
-    def discriminator_loss(real_pred: torch.tensor, fake_pred: torch.tensor, loss_dict: Dict[str, float]):
+    def discriminator_loss(real_pred: torch.tensor, loss_dict: Dict[str, float], fake_pred: torch.tensor = None, fake_pred_wp: torch.tensor = None):
         real_loss = F.softplus(-real_pred).mean()
-        fake_loss = F.softplus(fake_pred).mean()
+        fake_loss = 0
+        if fake_pred is not None:
+            fake_loss += F.softplus(fake_pred).mean()
+        if fake_pred_wp is not None:
+            fake_loss += F.softplus(fake_pred_wp).mean()
+        if fake_pred is not None and fake_pred_wp is not None:
+            fake_loss /= 2
+        
         loss_dict['d_real_loss'] = float(real_loss)
         loss_dict['d_fake_loss'] = float(fake_loss)
         return real_loss + fake_loss
@@ -490,15 +497,19 @@ class SetGANTrainer:
         grad_penalty = grad_real.pow(2).reshape(grad_real.shape[0], -1).sum(1).mean()
         return grad_penalty
 
-    def train_discriminator(self, x: torch.tensor):
+    def train_discriminator(self, x: torch.tensor, s):
         loss_dict = {}
         self.requires_grad(self.discriminator, True)
 
         with torch.no_grad():
-            real_w, fake_w = self.sample_real_and_fake_latents(x)
+            real_w, fake_w, fake_wp = self.sample_real_and_fake_latents(x, s)
         real_pred = self.discriminator(real_w)
         fake_pred = self.discriminator(fake_w)
-        loss = self.discriminator_loss(real_pred, fake_pred, loss_dict)
+        fake_pred_wp = self.discriminator(fake_wp)
+        if self.opts.train_encoder:
+            loss = self.discriminator_loss(real_pred, loss_dict, fake_pred=fake_pred, fake_pred_wp=fake_pred_wp)
+        else:
+            loss = self.discriminator_loss(real_pred, loss_dict, fake_pred_wp=fake_pred_wp)
         loss_dict['discriminator_loss'] = float(loss)
 
         self.discriminator_optimizer.zero_grad()
@@ -524,16 +535,21 @@ class SetGANTrainer:
 
         return loss_dict
 
-    def validate_discriminator(self, x: torch.tensor):
+    def validate_discriminator(self, x: torch.tensor, s):
         with torch.no_grad():
             loss_dict = {}
-            real_w, fake_w = self.sample_real_and_fake_latents(x)
+            real_w, fake_w, fake_wp = self.sample_real_and_fake_latents(x, s)
             real_pred = self.discriminator(real_w)
             fake_pred = self.discriminator(fake_w)
-            loss = self.discriminator_loss(real_pred, fake_pred, loss_dict)
+            fake_pred_wp = self.discriminator(fake_wp)
+            if self.opts.train_encoder:
+                loss = self.discriminator_loss(real_pred, loss_dict, fake_pred=fake_pred, fake_pred_wp=fake_pred_wp)
+            else:
+                loss = self.discriminator_loss(real_pred, loss_dict, fake_pred_wp=fake_pred_wp)
             loss_dict['discriminator_loss'] = float(loss)
             return loss_dict
 
+    '''
     def sample_real_and_fake_latents(self, x: torch.tensor):
         sample_z = torch.randn(x.shape[0], self.net.decoder.z_dim, device=self.device)
         c = torch.zeros([x.shape[0], self.net.decoder.c_dim], device=self.device)  # unconditional setting
@@ -548,10 +564,27 @@ class SetGANTrainer:
         if fake_w.ndim == 3:
             fake_w = fake_w[:, 0, :]
         return real_w, fake_w
+    '''
     
-
-    def sample_real_latents(self, n):
-        sample_z = torch.randn(n, self.net.decoder.z_dim, device=self.device)
-        c = torch.zeros([n, self.net.decoder.c_dim], device=self.device)   # unconditional setting
+    def sample_real_and_fake_latents(self, x: torch.tensor, s):
+        xflat = x.view(-1, *x.size()[2:])
+        sample_z = torch.randn(xflat.shape[0], self.net.decoder.z_dim, device=self.device)
+        c = torch.zeros([xflat.shape[0], self.net.decoder.c_dim], device=self.device)  # unconditional setting
         real_w = self.net.decoder.mapping(sample_z, c)
-
+        fake_w = self.net.encoder(xflat)
+        style_latent = self.net.decoder.mapping(s, c)
+        fake_wp = self.net.style_attn(to_imgset(fake_w, initial_set=x), style_latent)
+        fake_wp = fake_wp.view(-1, fake_wp.size())
+        if self.is_progressive_training():  # When progressive training, feed only unique w's
+            dims_to_discriminate = self.get_dims_to_discriminate()
+            fake_w = fake_w[:, dims_to_discriminate, :]
+            fake_wp = fake_wp[:, dims_to_discriminate, :]
+        if self.opts.use_w_pool:
+            real_w = self.real_w_pool.query(real_w)
+            fake_w = self.fake_w_pool.query(fake_w)
+            fake_wp = self.fake_w_pool.query(fake_wp)
+        if fake_w.ndim == 3:
+            fake_w = fake_w[:, 0, :]
+            fake_wp = fake_wp[:, 0, :]
+        return real_w, fake_w, fake_wp
+    

@@ -47,3 +47,5 @@ class SetGANTrainOptions(TrainOptions):
     sgxl: bool = False
 
     restyle_mode: str = 'none'
+
+    train_encoder: bool = False
