@@ -32,7 +32,7 @@ class SetGAN(nn.Module):
             attns.append(attns_i)
         self.attns = nn.ModuleList(attns)
 
-        if not args.disable_style_concat:
+        if not self.opts.disable_style_concat:
             self.style_concats = nn.ModuleList(style_concats)
             for layer in self.style_concats:
                 with torch.no_grad():
@@ -93,7 +93,7 @@ class SetGAN(nn.Module):
                 codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
         '''
         bs, rs = images.size()[:2]
-        cs = style.size(1)
+        cs = s.size(1)
 
         codes = self.encoder(to_images(x))
         codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
@@ -112,7 +112,7 @@ class SetGAN(nn.Module):
             #codes_i = codes_i.view(-1, codes_i.size(-1))
             transformed_codes.append(codes_i)
         transformed_codes = torch.stack(transformed_codes, dim=2)
-        decoder_inputs = conditional_styles.view(-1, *conditional_styles.size()[2:])
+        decoder_inputs = transformed_codes.view(-1, *transformed_codes.size()[2:])
 
         # generate the aligned images
         identity_transform = common.get_identity_transform()
