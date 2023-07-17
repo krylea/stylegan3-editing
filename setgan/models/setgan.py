@@ -10,18 +10,9 @@ from setgan.models.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
 from setgan.utils import to_images, to_imgset, to_set
 
-class SetGAN(nn.Module):
 
+class StyleAttention(nn.Module):
     def __init__(self, opts):
-        super(SetGAN, self).__init__()
-        self.set_opts(opts)
-        # Define architecture
-        self.n_styles = opts.n_styles
-        self.encoder = self.set_encoder()
-        self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
-        # Load weights if needed
-        self.load_weights()
-
         attns = []
         style_concats = []
         use_set_decoder = opts.use_set_decoder if hasattr(opts, 'use_set_decoder') else True
@@ -38,6 +29,34 @@ class SetGAN(nn.Module):
                 with torch.no_grad():
                     torch.nn.init.normal_(layer.weight[:, :self.decoder.style_dim], std=0.2)
                     torch.nn.init.eye_(layer.weight[:, self.decoder.style_dim:])
+    
+    def forward(self, z, s):
+        transformed_codes = []
+        for i in range(self.n_styles):
+            codes_i = self.attns[i](s, z[:,:,i])
+            if not self.args.disable_style_concat:
+                codes_i = self.style_concats[i](torch.cat([codes_i, s], dim=-1))
+            else:
+                codes_i = codes_i + s
+            #codes_i = codes_i.view(-1, codes_i.size(-1))
+            transformed_codes.append(codes_i)
+        transformed_codes = torch.stack(transformed_codes, dim=2)
+        return transformed_codes
+
+
+class SetGAN(nn.Module):
+
+    def __init__(self, opts):
+        super(SetGAN, self).__init__()
+        self.set_opts(opts)
+        # Define architecture
+        self.n_styles = opts.n_styles
+        self.encoder = self.set_encoder()
+        self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
+        # Load weights if needed
+        self.load_weights()
+
+        self.style_attn = StyleAttention(opts)
 
         for parameter in self.decoder.mapping.parameters():
             parameter.requires_grad_(False)
@@ -102,16 +121,7 @@ class SetGAN(nn.Module):
         style_latents = self.decoder.mapping(s.view(-1, s.size(-1)))
         style_latents = style_latents.view(*s.size()[:-1], style_latents.size(-1))
 
-        transformed_codes = []
-        for i in range(self.n_styles):
-            codes_i = self.attns[i](style_latents, codes[:,:,i])
-            if not self.args.disable_style_concat:
-                codes_i = self.style_concats[i](torch.cat([codes_i, style_latents], dim=-1))
-            else:
-                codes_i = codes_i + style_latents
-            #codes_i = codes_i.view(-1, codes_i.size(-1))
-            transformed_codes.append(codes_i)
-        transformed_codes = torch.stack(transformed_codes, dim=2)
+        transformed_codes = self.style_attn(codes, style_latents)
         decoder_inputs = transformed_codes.view(-1, *transformed_codes.size()[2:])
 
         # generate the aligned images
