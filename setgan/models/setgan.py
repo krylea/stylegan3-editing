@@ -8,7 +8,7 @@ from utils import common
 
 from setgan.models.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
-
+from setgan.utils import to_images, to_imgset, to_set
 
 class SetGAN(nn.Module):
 
@@ -31,6 +31,17 @@ class SetGAN(nn.Module):
             style_concats.append(FullyConnectedLayer(opts.latent*2, opts.latent))
             attns.append(attns_i)
         self.attns = nn.ModuleList(attns)
+
+        if not args.disable_style_concat:
+            self.style_concats = nn.ModuleList(style_concats)
+            for layer in self.style_concats:
+                with torch.no_grad():
+                    torch.nn.init.normal_(layer.weight[:, :self.decoder.style_dim], std=0.2)
+                    torch.nn.init.eye_(layer.weight[:, self.decoder.style_dim:])
+
+        for parameter in self.decoder.mapping.parameters():
+            parameter.requires_grad_(False)
+
 
     def set_encoder(self):
         if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
@@ -55,11 +66,20 @@ class SetGAN(nn.Module):
             self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
             self.latent_avg = self.decoder.mapping.w_avg
 
-    def forward(self, x, latent=None, resize=True, input_code=False, landmarks_transform=None,
+    def decode(self, x, transform=None, resize=True, **kwargs):
+        if transform is not None:
+            self.decoder.synthesis.input.transform = transform
+        images = self.decoder.synthesis(x, noise_mode='const', force_fp32=True, **kwargs)
+        if resize:
+            images = self.face_pool(images)
+        return images
+        
+    def forward(self, x, s, latent=None, resize=True, input_code=False, landmarks_transform=None,
                 return_latents=False, return_aligned_and_unaligned=False):
 
         images, unaligned_images = None, None
 
+        '''
         if input_code:
             codes = x
         else:
@@ -71,6 +91,28 @@ class SetGAN(nn.Module):
             else:
                 # first iteration is with respect to the avg latent code
                 codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
+        '''
+        bs, rs = images.size()[:2]
+        cs = style.size(1)
+
+        codes = self.encoder(to_images(x))
+        codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
+
+        codes = codes.view(bs, rs, *codes.size()[1:])
+        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)))
+        style_latents = style_latents.view(*s.size()[:-1], style_latents.size(-1))
+
+        transformed_codes = []
+        for i in range(self.n_styles):
+            codes_i = self.attns[i](style_latents, codes[:,:,i])
+            if not self.args.disable_style_concat:
+                codes_i = self.style_concats[i](torch.cat([codes_i, style_latents], dim=-1))
+            else:
+                codes_i = codes_i + style_latents
+            #codes_i = codes_i.view(-1, codes_i.size(-1))
+            transformed_codes.append(codes_i)
+        transformed_codes = torch.stack(transformed_codes, dim=2)
+        decoder_inputs = conditional_styles.view(-1, *conditional_styles.size()[2:])
 
         # generate the aligned images
         identity_transform = common.get_identity_transform()
@@ -79,23 +121,19 @@ class SetGAN(nn.Module):
         else:
             identity_transform = torch.from_numpy(identity_transform).cuda().float()
         self.decoder.synthesis.input.transform = identity_transform
-        images = self.decoder.synthesis(codes, noise_mode='const', force_fp32=True)
-
-        if resize:
-            images = self.face_pool(images)
+        images = self.decode(decoder_inputs, transform=identity_transform, resize=resize)
+        images = images.view(bs, cs, *images.size()[2:])
 
         # generate the unaligned image using the user-specified transforms
         if landmarks_transform is not None:
-            self.decoder.synthesis.input.transform = landmarks_transform.float()   # size: [batch_size, 3, 3]
-            unaligned_images = self.decoder.synthesis(codes, noise_mode='const', force_fp32=True)
-            if resize:
-                unaligned_images = self.face_pool(unaligned_images)
+            images = self.decode(decoder_inputs, transform=landmarks_transform.float(), resize=resize)
+            unaligned_images = unaligned_images.view(bs, cs, *unaligned_images.size()[2:])
 
         if landmarks_transform is not None and return_aligned_and_unaligned:
-            return images, unaligned_images, codes
+            return images, unaligned_images, transformed_codes
 
         if return_latents:
-            return images, codes
+            return images, transformed_codes
         else:
             return images
 

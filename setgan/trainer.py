@@ -23,8 +23,12 @@ from inversion.models.e4e3 import e4e
 from utils.ranger import Ranger
 from utils import common, train_utils
 
+from setgan.models.setgan import SetGAN
 
-class Coach:
+
+
+
+class SetGANTrainer:
     def __init__(self, opts: e4eTrainOptions, prev_train_checkpoint: bool = None):
         self.opts = opts
 
@@ -34,7 +38,7 @@ class Coach:
         self.opts.device = self.device
 
         # Initialize network
-        self.net = e4e(self.opts).to(self.device)
+        self.net = SetGAN(self.opts).to(self.device)
 
         if self.net.latent_avg is None:
             self.net.latent_avg = self.net.decoder.mapping.w_avg
@@ -42,9 +46,7 @@ class Coach:
         self.n_styles = self.opts.n_styles
 
         # get the image corresponding to the latent average
-        self.avg_image = self.net(self.net.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),
-                                  input_code=True,
-                                  return_latents=False)[0]
+        self.avg_image = self.net.decode(self.net.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
         self.avg_image = self.avg_image.to(self.device).float().detach()
         common.tensor2im(self.avg_image).save(self.opts.exp_dir / 'avg_image.jpg')
 
@@ -78,8 +80,7 @@ class Coach:
                                            num_workers=int(self.opts.workers),
                                            drop_last=True)
         self.test_dataloader = DataLoader(self.test_dataset,
-                                          batch_size=se
-                                          lf.opts.test_batch_size,
+                                          batch_size=self.opts.test_batch_size,
                                           shuffle=False,
                                           num_workers=int(self.opts.test_workers),
                                           drop_last=False)
@@ -122,6 +123,7 @@ class Coach:
             disc_loss_dict = self.train_discriminator(x_input)
         return disc_loss_dict
 
+    '''
     def perform_train_iteration_on_batch(self, x: torch.tensor, y: torch.tensor):
         y_hat, latent = None, None
         loss_dict, id_logs = None, None
@@ -144,6 +146,20 @@ class Coach:
                 y_hats[idx].append([y_hat[idx], id_logs[idx]['diff_target']])
 
         return y_hats, loss_dict, id_logs
+    '''
+
+    def train_step(self, x, y):
+        avg_image_for_batch = self.avg_image.unsqueeze(0).repeat(x.shape[0], 1, 1, 1, 1)
+        yhats, latents = self.net(x, y0=avg_image_for_batch)
+        outputs = {idx: [] for idx in range(x.shape[0])}
+        for iter in range(self.opts.n_iters_per_batch):
+            loss, loss_dict, id_logs = self.calc_loss(x, y, y_hats[iter], latents[iter])
+            loss.backward()
+            # store intermediate outputs
+            for idx in range(x.shape[0]):
+                outputs[idx].append([y_hat[idx], id_logs[idx]['diff_target']])
+        return outputs, loss_dict, id_logs
+
 
     def train(self):
         self.net.train()
