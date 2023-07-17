@@ -147,9 +147,14 @@ class SetGANTrainer:
 
         return y_hats, loss_dict, id_logs
     '''
+    def train_step_wrapper(self, x, y, s):
+        if (self.opts.using_restyle == False):
+            #self.train_step_no_restyle(self, x, y, s)
+            pass
+        else:
+            self.train_step_with_restyle(self, x, y, s)
     
-
-    def train_step(self, x, y, s):
+    def train_step_with_restyle(self, x, y, s):
         avg_image_for_batch = self.avg_image.unsqueeze(0).repeat(x.shape[0], 1, 1, 1, 1)
         yhats, latents = self.net(x, s, y0=avg_image_for_batch, iters=self.opts.n_iters_per_batch)
         outputs = {idx: [] for idx in range(x.shape[0])}
@@ -161,6 +166,60 @@ class SetGANTrainer:
                 outputs[idx].append([yhats[iter][idx], id_logs[idx]['diff_target']])
         return outputs, loss_dict, id_logs
     
+    def gan_train(epoch, generator, generator_optimizer, discriminator, discriminator_optimizer):
+
+        discriminator_loss = 0
+        generator_loss = 0
+
+        for batch_idx, (data, _) in enumerate(train_loader):
+            # first train discriminator
+            discriminator_optimizer.zero_grad()
+
+            # with real batch
+            real_label = 1
+            fake_label = 0
+
+            real_cpu = data.to(device)
+            b_size = real_cpu.size(0)
+            label = torch.full((b_size,), real_label, dtype=torch.float, device=device)
+
+            output = discriminator(real_cpu).view(-1)
+            loss_real = gan_loss_function(output, label)
+            loss_real.backward()
+            D_x = output.mean().item()
+
+            # with fake batch
+            noise = torch.randn(b_size, 20, device=device)
+            fake = generator(noise)
+            label.fill_(fake_label)
+
+            # do classification
+            output = discriminator(fake.detach()).view(-1)
+            loss_fake = gan_loss_function(output, label)
+            loss_fake.backward()
+            D_G_z1 = output.mean().item()
+
+            discriminator_loss += loss_real.item() + loss_fake.item()
+            discriminator_optimizer.step()
+
+            # now train generator
+            generator_optimizer.zero_grad()
+            label.fill_(real_label)  # fake labels are real for generator cost
+            output = discriminator(fake).view(-1)
+            loss_G = gan_loss_function(output, label)
+            loss_G.backward()
+            generator_loss += loss_G.item()
+
+            D_G_z2 = output.mean().item()
+            generator_optimizer.step()
+
+        average_generator_loss = generator_loss / len(train_loader.dataset)
+        average_discriminator_loss = discriminator_loss / (len(train_loader.dataset) * 2)
+        
+
+        return average_generator_loss, average_discriminator_loss
+
+
     def val_step(self, x, y):
         avg_image_for_batch = self.avg_image.unsqueeze(0).repeat(x.shape[0], 1, 1, 1, 1)
         yhats, latents = self.net(x, y0=avg_image_for_batch)
