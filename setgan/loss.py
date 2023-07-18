@@ -29,7 +29,7 @@ from pg_modules.projector import get_backbone_normstats
 #----------------------------------------------------------------------------
 
 class Loss:
-    def accumulate_gradients(self, phase, real_img, real_c, gen_z, gen_c, gain, cur_nimg): # to be overridden by subclass
+    def accumulate_gradients(self, phase, real_img, real_c, gen_s, gen_c, gain, cur_nimg): # to be overridden by subclass
         raise NotImplementedError()
 
 #----------------------------------------------------------------------------
@@ -63,6 +63,7 @@ class ProjectedGANLoss(Loss):
         self.cls_weight = cls_weight
         self.cls_guidance_loss = torch.nn.CrossEntropyLoss()
 
+    '''
     def run_G(self, z, c, update_emas=False):
         ws = self.G.mapping(z, c, update_emas=update_emas)
         if self.style_mixing_prob > 0:
@@ -72,6 +73,9 @@ class ProjectedGANLoss(Loss):
                 ws[:, cutoff:] = self.G.mapping(torch.randn_like(z), c, update_emas=False)[:, cutoff:]
         img = self.G.synthesis(ws, update_emas=False)  # enabling emas leads to collapse with PG
         return img, ws
+    '''
+    def run_G(self, reference_set, s, c, update_emas=False):
+        return self.G(reference_set, s)
 
     def run_D(self, img, c, blur_sigma=0, update_emas=False):
         blur_size = np.floor(blur_sigma * 3)
@@ -82,7 +86,7 @@ class ProjectedGANLoss(Loss):
 
         return self.D(img, c)
 
-    def accumulate_gradients(self, phase, real_img, real_c, gen_z, gen_c, gain, cur_nimg):
+    def accumulate_gradients(self, phase, reference_set, candidate_set, real_c, gen_s, gen_c, gain, cur_nimg):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']
         do_Gmain = (phase in ['Gmain', 'Gboth'])
         do_Dmain = (phase in ['Dmain', 'Dboth'])
@@ -101,7 +105,7 @@ class ProjectedGANLoss(Loss):
                     getattr(self.G.synthesis, name).requires_grad_(name in self.G.head_layer_names)
 
             with torch.autograd.profiler.record_function('Gmain_forward'):
-                gen_img, _gen_ws = self.run_G(gen_z, gen_c)
+                gen_img, _gen_ws = self.run_G(gen_s, gen_c)
                 gen_logits = self.run_D(gen_img, gen_c, blur_sigma=blur_sigma)
 
                 loss_Gmain = sum([(-l).mean() for l in gen_logits])
@@ -124,8 +128,8 @@ class ProjectedGANLoss(Loss):
         start_plreg = (cur_nimg >= 1e6)
         if start_plreg and self.pl_weight and phase in ['Greg', 'Gboth']:
             with torch.autograd.profiler.record_function('Gpl_forward'):
-                batch_size = gen_z.shape[0] // self.pl_batch_shrink
-                gen_img, gen_ws = self.run_G(gen_z[:batch_size], gen_c[:batch_size])
+                batch_size = gen_s.shape[0] // self.pl_batch_shrink
+                gen_img, gen_ws = self.run_G(gen_s[:batch_size], gen_c[:batch_size])
                 pl_noise = torch.randn_like(gen_img) / np.sqrt(gen_img.shape[2] * gen_img.shape[3])
                 with torch.autograd.profiler.record_function('pl_grads'), conv2d_gradfix.no_weight_gradients(self.pl_no_weight_grad):
                     pl_grads = torch.autograd.grad(outputs=[(gen_img * pl_noise).sum()], inputs=[gen_ws], create_graph=True, only_inputs=True)[0]
@@ -142,7 +146,7 @@ class ProjectedGANLoss(Loss):
         # Dmain: Minimize logits for generated images.
         if do_Dmain:
             with torch.autograd.profiler.record_function('Dgen_forward'):
-                gen_img, _gen_ws = self.run_G(gen_z, gen_c, update_emas=True)
+                gen_img, _gen_ws = self.run_G(gen_s, gen_c, update_emas=True)
                 gen_logits = self.run_D(gen_img, gen_c, blur_sigma=blur_sigma)
                 loss_Dgen = sum([(F.relu(torch.ones_like(l) + l)).mean() for l in gen_logits])
                 gen_logits = torch.cat(gen_logits)
