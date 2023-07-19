@@ -5,13 +5,6 @@ from PIL import Image
 from torch.utils.data import Dataset, ConcatDataset, Subset, IterableDataset, random_split, RandomSampler
 import torch
 
-from src.setgan.utils import split_dataset
-
-from src.meta_dataset.reader import Reader, parse_record
-from src.meta_dataset.dataset_spec import Split
-from src.meta_dataset import dataset_spec as dataset_spec_lib
-from src.meta_dataset.transform import get_transforms
-
 
 import torchvision
 import torchvision.transforms.functional as TF
@@ -472,6 +465,11 @@ class ImageFolderDatasetWithPreprocessing(Dataset):
         labels = np.array(labels)
         labels = labels.astype({1: np.int64, 2: np.float32}[labels.ndim])
         return labels
+
+
+
+
+
 
 
 
