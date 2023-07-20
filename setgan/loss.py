@@ -74,17 +74,22 @@ class ProjectedGANLoss(Loss):
         img = self.G.synthesis(ws, update_emas=False)  # enabling emas leads to collapse with PG
         return img, ws
     '''
-    def run_G(self, reference_set, s, c, update_emas=False):
+    def run_G(self, reference_set, s, update_emas=False):
         return self.G(reference_set, s)
 
-    def run_D(self, img, c, blur_sigma=0, update_emas=False):
+    def run_D(self, reference_set, imgs, blur_sigma=0, update_emas=False):
         blur_size = np.floor(blur_sigma * 3)
         if blur_size > 0:
+            ref_flat = to_images(reference_set)
+            imgs_flat = to_image(imgs)
             with torch.autograd.profiler.record_function('blur'):
-                f = torch.arange(-blur_size, blur_size + 1, device=img.device).div(blur_sigma).square().neg().exp2()
-                img = upfirdn2d.filter2d(img, f / f.sum())
+                f = torch.arange(-blur_size, blur_size + 1, device=imgs.device).div(blur_sigma).square().neg().exp2()
+                imgs_flat = upfirdn2d.filter2d(imgs_flat, f / f.sum())
+                ref_flat = upfirdn2d.filter2d(ref_flat, f / f.sum())
+            reference_set = to_imgset(ref_flat, initial_set=reference_set)
+            imgs = to_imgset(imgs_flat, initial_set=imgs)
 
-        return self.D(img, c)
+        return self.D(reference_set, imgs)
 
     def accumulate_gradients(self, phase, reference_set, candidate_set, real_c, gen_s, gen_c, gain, cur_nimg):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']

@@ -126,22 +126,26 @@ class SetGAN(nn.Module):
         decoder_inputs = transformed_codes.view(-1, *transformed_codes.size()[2:])
 
         # generate the aligned images
+        '''
         identity_transform = common.get_identity_transform()
         if not self.opts.sgxl:
             identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
         else:
             identity_transform = torch.from_numpy(identity_transform).cuda().float()
         self.decoder.synthesis.input.transform = identity_transform
-        images = self.decode(decoder_inputs, transform=identity_transform, resize=resize)
+        '''
+        images = self.decode(decoder_inputs, resize=resize)
         images = images.view(bs, cs, *images.size()[2:])
 
         # generate the unaligned image using the user-specified transforms
+        '''
         if landmarks_transform is not None:
             images = self.decode(decoder_inputs, transform=landmarks_transform.float(), resize=resize)
             unaligned_images = unaligned_images.view(bs, cs, *unaligned_images.size()[2:])
 
         if landmarks_transform is not None and return_aligned_and_unaligned:
             return images, unaligned_images, transformed_codes
+        '''
 
         if return_latents:
             return images, transformed_codes
