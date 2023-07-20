@@ -1,3 +1,20 @@
+import torch
+from torch.utils.data import Dataset
+from PIL import Image
+
+from torch.utils.data import Dataset, ConcatDataset, Subset, IterableDataset, random_split, RandomSampler
+import torch
+
+
+import torchvision
+import torchvision.transforms.functional as TF
+
+import numpy as np
+import cv2
+import math
+import os
+import random
+
 class Dataset():
     def __init__(self,
         path,                   # path to the zip file
@@ -127,7 +144,6 @@ class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
         self.fnames = fnames
         self._zipfile = None
         
-        self._base_resolution = resolution
         self.dataset_attrs=None
 
         # Apply max_size.
