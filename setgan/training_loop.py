@@ -30,6 +30,8 @@ from metrics import metric_main
 
 import safe_dataset
 
+from setgan.dataset import ImageMultiSetGenerator
+
 STEP_INTERVAL=1000
 
 #----------------------------------------------------------------------------
@@ -135,6 +137,8 @@ def training_loop(
     abort_fn                = None,     # Callback function for determining whether to abort training. Must return consistent results across ranks.
     progress_fn             = None,     # Callback function for updating training progress. Called for all ranks.
     restart_every           = -1,       # Time interval in seconds to exit code
+    reference_size          = (7,12),
+    candidate_size          = (1,4),
 ):
     # Initialize.
     start_time = time.time()
@@ -159,7 +163,8 @@ def training_loop(
         print('Loading training set...')
     training_set = safe_dataset.SafeDataset(dnnlib.util.construct_class_by_name(**training_set_kwargs)) # subclass of training.dataset.Dataset
     training_set_sampler = misc.InfiniteSampler(dataset=training_set, rank=rank, num_replicas=num_gpus, seed=random_seed)
-    training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
+    #training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
+    training_set_generator = ImageMultiSetGenerator(training_set, rank=rank, world_size=num_gpus)
     if rank == 0:
         print()
         print('Num images: ', len(training_set))
@@ -315,17 +320,21 @@ def training_loop(
     while True:
 
         with torch.autograd.profiler.record_function('data_fetch'):
-            phase_real_img, phase_real_c = next(training_set_iterator)
-            phase_real_img = (phase_real_img.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
-            phase_real_c = phase_real_c.to(device).split(batch_gpu)
-            all_gen_z = torch.randn([len(phases) * batch_size, G.z_dim], device=device)
-            all_gen_z = [phase_gen_z.split(batch_gpu) for phase_gen_z in all_gen_z.split(batch_size)]
-            all_gen_c = [training_set.get_label(np.random.randint(len(training_set))) for _ in range(len(phases) * batch_size)]
-            all_gen_c = torch.from_numpy(np.stack(all_gen_c)).pin_memory().to(device)
-            all_gen_c = [phase_gen_c.split(batch_gpu) for phase_gen_c in all_gen_c.split(batch_size)]
+            reference_samples = torch.randint(*reference_size, (1,))
+            candidate_samples = torch.randint(*candidate_size, (1,))
+            reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+            #phase_real_img, phase_real_c = next(training_set_iterator)
+            phase_reference_set = (reference_set.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
+            phase_candidate_set = (candidate_set.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
+            #phase_real_c = phase_real_c.to(device).split(batch_gpu)
+            all_gen_s = torch.randn([len(phases) * batch_size, candidate_samples, G.z_dim], device=device)
+            all_gen_s = [phase_gen_s.split(batch_gpu) for phase_gen_s in all_gen_s.split(batch_size)]
+            #all_gen_c = [training_set.get_label(np.random.randint(len(training_set))) for _ in range(len(phases) * batch_size)]
+            #all_gen_c = torch.from_numpy(np.stack(all_gen_c)).pin_memory().to(device)
+            #all_gen_c = [phase_gen_c.split(batch_gpu) for phase_gen_c in all_gen_c.split(batch_size)]
 
         # Execute training phases.
-        for phase, phase_gen_z, phase_gen_c in zip(phases, all_gen_z, all_gen_c):
+        for phase, phase_gen_z, phase_gen_c in zip(phases, all_gen_s):
             if batch_idx % phase.interval != 0:
                 continue
             if phase.start_event is not None:
@@ -339,8 +348,8 @@ def training_loop(
             if phase.name in ['Dmain', 'Dboth', 'Dreg'] and hasattr(phase.module, 'feature_networks'):
                 phase.module.feature_networks.requires_grad_(False)
 
-            for real_img, real_c, gen_z, gen_c in zip(phase_real_img, phase_real_c, phase_gen_z, phase_gen_c):
-                loss.accumulate_gradients(phase=phase.name, real_img=real_img, real_c=real_c, gen_z=gen_z, gen_c=gen_c, gain=phase.interval, cur_nimg=cur_nimg)
+            for reference_set, candidate_set, gen_s in zip(phase_reference_set, phase_candidate_set, phase_gen_s):
+                loss.accumulate_gradients(phase=phase.name, reference_set=reference_set, candidate_set=candidate_set, gen_s=gen_s, gain=phase.interval, cur_nimg=cur_nimg)
             phase.module.requires_grad_(False)
 
             # Update weights.
