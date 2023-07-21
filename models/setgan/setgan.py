@@ -7,7 +7,7 @@ from inversion.models.encoders import restyle_e4e_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
 
-from setgan.models.set import SetTransformerDecoder
+from models.setgan.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
 from setgan.utils import to_images, to_imgset, to_set
 

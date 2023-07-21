@@ -10,15 +10,15 @@
 "Alias-Free Generative Adversarial Networks"."""
 
 import sys
-sys.path.append(".")
-sys.path.append("..")
-
 import os
 import click
 import re
 import json
 import tempfile
 import torch
+
+os.chdir('..')
+
 import models.styleganxl.legacy as legacy
 
 import dnnlib
