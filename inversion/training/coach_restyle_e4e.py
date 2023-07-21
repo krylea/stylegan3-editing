@@ -89,6 +89,7 @@ class Coach:
         self.logger = SummaryWriter(log_dir=log_dir)
         
         self.output_dir = opts.exp_dir / 'checkpoints'
+        self.output_dir.mkdir(exist_ok=True, parents=True)
 
         # Initialize checkpoint dir
         self.checkpoint_dir = opts.ckpt_dir

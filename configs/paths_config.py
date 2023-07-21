@@ -5,7 +5,9 @@ dataset_paths = {
 	'celeba_test': Path(''),
 
 	'ffhq': Path('/ssd003/projects/ffhq/images1024x1024/'),
-	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/')
+	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
+
+    'imagenet': Path('/scratch/hdd001/datasets/imagenet/train')
 }
 
 model_paths = {
@@ -27,7 +29,10 @@ model_paths = {
 	'mtcnn_onet': Path('pretrained_models/mtcnn/onet.npy'),
 	# classifiers used for interfacegan training
 	'age_estimator': Path('pretrained_models/dex_age_classifier.pth'),
-	'pose_estimator': Path('pretrained_models/hopenet_robust_alpha1.pkl')
+	'pose_estimator': Path('pretrained_models/hopenet_robust_alpha1.pkl'),
+
+    # encoders
+    'stylegan_xl_ffhq_256_encoder': Path('experiments/test-ffhq-1/checkpoint.pt'),
 }
 
 styleclip_directions = {

@@ -24,6 +24,8 @@ from torch_utils import training_stats
 from torch_utils import custom_ops
 from torch_utils import misc
 
+from configs.paths_config import dataset_paths, model_paths
+
 #----------------------------------------------------------------------------
 
 def subprocess_fn(rank, c, temp_dir):
@@ -210,7 +212,7 @@ def main(**kwargs):
 
     # Training set.
     #c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
-    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, path=opts.data)
+    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, path=dataset_paths[opts.dataset_name])
     #if opts.cond and not c.training_set_kwargs.use_labels:
     #    raise click.ClickException('--cond=True requires labels specified in dataset.json')
     #c.training_set_kwargs.use_labels = opts.cond
@@ -305,8 +307,8 @@ def main(**kwargs):
     c.G_kwargs.disable_style_concat = opts.disable_style_concat
     c.G_kwargs.use_temperature = opts.use_temperature
     c.G_kwargs.encoder_type = 'ResNetProgressiveBackboneEncoder' if opts.dataset_name == 'imagenet' else 'ProgressiveBackboneEncoder'
-    c.G_kwargs.checkpoint_path = opts.checkpoint_path
-    c.G_kwargs.stylegan_weights = opts.stylegan_weights
+    c.G_kwargs.checkpoint_path = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
+    c.G_kwargs.stylegan_weights = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
     c.G_kwargs.train_encoder = opts.train_encoder
     c.G_kwargs.train_decoder = opts.train_decoder
 
@@ -356,7 +358,7 @@ def main(**kwargs):
     ##################################
 
     # Launch.
-    launch_training(c=c, desc=desc, outdir=opts.outdir, dry_run=opts.dry_run)
+    launch_training(c=c, exp_name=opts.exp_name, outdir=opts.outdir, dry_run=opts.dry_run)
 
     # Check for restart
     last_snapshot = misc.get_ckpt_path(c.run_dir)
