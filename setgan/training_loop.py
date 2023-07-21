@@ -28,7 +28,7 @@ from torch_utils.ops import grid_sample_gradfix
 import legacy
 from metrics import metric_main
 
-import safe_dataset
+import setgan.safe_dataset as safe_dataset
 
 from setgan.dataset import ImageMultiSetGenerator, ImagesDataset
 from setgan.models.setgan import SetGAN
@@ -165,7 +165,7 @@ def training_loop(
     #training_set = safe_dataset.SafeDataset(dnnlib.util.construct_class_by_name(**training_set_kwargs)) # subclass of training.dataset.Dataset
     #training_set_sampler = misc.InfiniteSampler(dataset=training_set, rank=rank, num_replicas=num_gpus, seed=random_seed)
     #training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
-    training_set = ImagesDataset.from_folder_by_category(**training_set_kwargs)
+    training_set = [safe_dataset.SafeDataset(x) for x in ImagesDataset.from_folder_by_category(**training_set_kwargs)]
     training_set_generator = ImageMultiSetGenerator(training_set, rank=rank, world_size=num_gpus)
     if rank == 0:
         print()
@@ -180,8 +180,12 @@ def training_loop(
     common_kwargs = dict(c_dim=training_set.label_dim, img_resolution=training_set.resolution, img_channels=training_set.num_channels)
     #G = dnnlib.util.construct_class_by_name(**G_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
     G = SetGAN(G_kwargs)
-    D = dnnlib.util.construct_class_by_name(**D_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
     G_ema = copy.deepcopy(G).eval()
+    
+    D = dnnlib.util.construct_class_by_name(**D_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
+    with dnnlib.util.open_url(G_kwargs.stylegan_weights) as f:
+        resume_data = legacy.load_network_pkl(f)
+    D.load_weights(resume_data['D'])
 
     # Check for existing checkpoint
     ckpt_pkl = None
