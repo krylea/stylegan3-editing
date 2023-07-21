@@ -20,11 +20,13 @@ from torch_utils import training_stats
 from torch_utils.ops import conv2d_gradfix
 from torch_utils.ops import upfirdn2d
 import dnnlib
-import legacy
+import models.styleganxl.legacy as legacy
 
-from pg_modules.blocks import Interpolate
+from models.styleganxl.pg_modules.blocks import Interpolate
 import timm
-from pg_modules.projector import get_backbone_normstats
+from models.styleganxl.pg_modules.projector import get_backbone_normstats
+
+from setgan.utils import to_images, to_imgset, to_set
 
 #----------------------------------------------------------------------------
 
@@ -34,7 +36,7 @@ class Loss:
 
 #----------------------------------------------------------------------------
 
-class ProjectedGANLoss(Loss):
+class ProjectedSetGANLoss(Loss):
     def __init__(self, device, G, D, G_ema, blur_init_sigma=0, blur_fade_kimg=0,
                  train_head_only=False, style_mixing_prob=0.0, pl_weight=0.0,
                  cls_model='efficientnet_b1', cls_weight=0.0, **kwargs):
@@ -81,7 +83,7 @@ class ProjectedGANLoss(Loss):
         blur_size = np.floor(blur_sigma * 3)
         if blur_size > 0:
             ref_flat = to_images(reference_set)
-            imgs_flat = to_image(imgs)
+            imgs_flat = to_images(imgs)
             with torch.autograd.profiler.record_function('blur'):
                 f = torch.arange(-blur_size, blur_size + 1, device=imgs.device).div(blur_sigma).square().neg().exp2()
                 imgs_flat = upfirdn2d.filter2d(imgs_flat, f / f.sum())

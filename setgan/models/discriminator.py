@@ -5,15 +5,16 @@ import torch.nn.functional as F
 from torchvision.transforms import Normalize
 import pickle
 
-from training.diffaug import DiffAugment
-from training.networks_stylegan2 import FullyConnectedLayer
-from pg_modules.blocks import conv2d, DownBlock, DownBlockPatch
-from pg_modules.projector import F_RandomProj
-from feature_networks.constants import VITS
+from models.styleganxl.training.diffaug import DiffAugment
+from models.styleganxl.training.networks_stylegan2 import FullyConnectedLayer
+from models.styleganxl.pg_modules.blocks import conv2d, DownBlock, DownBlockPatch
+from models.styleganxl.pg_modules.projector import F_RandomProj
+from models.styleganxl.feature_networks.constants import VITS
 
 from torch_utils.misc import copy_params_and_buffers
 
 from setgan.models.set import MultiSetTransformerEncoder, MultiSetTransformer
+from setgan.utils import to_images, to_imgset, to_set
 
 class SingleDisc(nn.Module):
     def __init__(self, nc=None, ndf=None, start_sz=256, end_sz=8, out_features=64, head=None, patch=False):
@@ -59,7 +60,7 @@ class SingleDisc(nn.Module):
     def load_weights(self, source):
         rg = self.requires_grad
         self.requires_grad_(False)
-        for layer, src_layer in zip(self.main[:-1], target.main[:-1]):
+        for layer, src_layer in zip(self.main[:-1], source.main[:-1]):
             copy_params_and_buffers(src_layer, layer)
         self.requires_grad_(rg)
 
@@ -77,7 +78,7 @@ class MultiScaleD(nn.Module):
         proj_type=2,  # 0 = no projection, 1 = cross channel mixing, 2 = cross scale mixing
         cond=0,
         patch=False,
-        set_kwargs={}
+        set_kwargs={},
         **kwargs,
     ):
         super().__init__()
@@ -87,7 +88,7 @@ class MultiScaleD(nn.Module):
         # the first disc is on the lowest level of the backbone
         self.disc_in_channels = channels[:num_discs]
         self.disc_in_res = resolutions[:num_discs]
-        Disc = SingleDiscCond if cond else SingleDisc
+        Disc = SingleDisc
 
         set_kwargs.update({
             'x_size': latent_size,
@@ -95,7 +96,7 @@ class MultiScaleD(nn.Module):
             'latent_size': latent_size,
             'hidden_size': latent_size,
             'output_size': 1,
-            'decoder_layers': 0
+            'decoder_layers': 0,
             'weight_sharing': 'none',
             'ln': True,
             'dropout': 0

@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import os
 
 from configs.paths_config import model_paths
 from inversion.models.encoders import restyle_e4e_encoders
@@ -72,7 +73,7 @@ class SetGAN(nn.Module):
         return encoder
 
     def load_weights(self):
-        if self.opts.checkpoint_path is not None:
+        if self.opts.checkpoint_path is not None and os.path.exists(self.opts.checkpoint_path):
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
