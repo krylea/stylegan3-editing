@@ -12,6 +12,7 @@ BATCH_PER_GPU=16
 
 RES=$1
 DATASET_NAME=$2
+EXP_NAME=$3
 ckpt=${3:-''}
 kimg=${4:-10000}
 
@@ -39,7 +40,8 @@ argstring="$argstring \
 --input_nc 3 \
 --n_styles 18 \
 --reference_size 7 12 \
---candidate_size 1 4"
+--candidate_size 1 4 \
+--exp_name $EXP_NAME"
 
 if [ -n $ckpt ]
 then
