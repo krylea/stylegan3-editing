@@ -12,8 +12,10 @@ BATCH_PER_GPU=16
 
 RES=$1
 DATASET_NAME=$2
-ckpt=${3:-''}
-kimg=${4:-10000}
+ENC_PATH=$3
+DEC_PATH=$4
+ckpt=${5:-''}
+kimg=${6:-10000}
 
 BATCH=$((BATCH_PER_GPU * SLURM_GPUS_ON_NODE)) 
 GPUS=$SLURM_GPUS_ON_NODE
@@ -37,8 +39,8 @@ fi
 argstring="$argstring \
 --encoder_type ProgressiveBackboneEncoder \
 --input_nc 3 \
---stylegan_weights ../stylegan-xl/pretrained_models/ffhq256.pkl \
---ckpt_dir /checkpoint/kaselby/$name \
+--stylegan_weights $DEC_PATH \
+--checkpoint_path $ENC_PATH \
 --n_styles 18 \
 --reference_size 7 12 \
 --candidate_size 1 4"
