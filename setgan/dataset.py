@@ -128,13 +128,13 @@ except ImportError:
 
 class ImagesDataset(Dataset):
     @classmethod
-    def from_folder(cls, source_root, resolution):
-        source_paths = sorted(make_dataset(source_root))
+    def from_folder(cls, path, resolution):
+        source_paths = sorted(make_dataset(path))
         return cls(source_paths, resolution)
 
     @classmethod
-    def from_folder_by_category(cls, source_root, resolution):
-        source_paths = sorted(make_dataset(source_root))
+    def from_folder_by_category(cls, path, resolution):
+        source_paths = sorted(make_dataset(path))
         all_category_paths = {}
         for path in source_paths:
             cate = path.split('/')[-1].split('_')[0]
