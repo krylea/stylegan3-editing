@@ -4,17 +4,17 @@ dataset_paths = {
 	'celeba_train': Path(''),
 	'celeba_test': Path(''),
 
-	'ffhq': Path('/ssd003/projects/ffhq/images1024x1024/'),
+	'ffhq': '/ssd003/projects/ffhq/images1024x1024/',
 	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
 
-    'imagenet': Path('/scratch/hdd001/datasets/imagenet/train')
+    'imagenet': '/scratch/hdd001/datasets/imagenet/train'
 }
 
 model_paths = {
 	# models for backbones and losses
 	'ir_se50': Path('pretrained_models/model_ir_se50.pth'),
 	# stylegan3 generators
-    'stylegan_xl_ffhq_256': Path('../stylegan-xl/pretrained_models/ffhq256.pkl'),
+    'stylegan_xl_ffhq_256': '../stylegan-xl/pretrained_models/ffhq256.pkl',
     'stylegan_xl_ffhq_1024': Path('../stylegan-xl/pretrained_models/ffhq1024.pkl'),
 	'stylegan3_ffhq': Path('pretrained_models/stylegan3-r-ffhq-1024x1024.pkl'),
 	'stylegan3_ffhq_pt': Path('pretrained_models/sg3-r-ffhq-1024.pt'),
@@ -32,7 +32,7 @@ model_paths = {
 	'pose_estimator': Path('pretrained_models/hopenet_robust_alpha1.pkl'),
 
     # encoders
-    'stylegan_xl_ffhq_256_encoder': Path('experiments/test-ffhq-1/checkpoint.pt'),
+    'stylegan_xl_ffhq_256_encoder': 'experiments/test-ffhq-1/checkpoint.pt',
 }
 
 styleclip_directions = {
