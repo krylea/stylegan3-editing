@@ -15,7 +15,7 @@ import re
 import json
 import tempfile
 import torch
-import legacy
+import models.styleganxl.legacy as legacy
 
 import dnnlib
 from setgan.training_loop import training_loop
