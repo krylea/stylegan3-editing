@@ -128,12 +128,12 @@ except ImportError:
 
 class ImagesDataset(Dataset):
     @classmethod
-    def from_folder(cls, source_root, opts, transforms=None):
+    def from_folder(cls, source_root, resolution):
         source_paths = sorted(make_dataset(source_root))
-        return cls(source_paths, opts, transforms)
+        return cls(source_paths, resolution)
 
     @classmethod
-    def from_folder_by_category(cls, source_root, opts, transforms=None):
+    def from_folder_by_category(cls, source_root, resolution):
         source_paths = sorted(make_dataset(source_root))
         all_category_paths = {}
         for path in source_paths:
@@ -141,12 +141,11 @@ class ImagesDataset(Dataset):
             if cate not in all_category_paths:
                 all_category_paths[cate] = []
             all_category_paths[cate].append(path)
-        return [cls(category_paths, opts, transforms) for category_paths in all_category_paths.values()]
+        return [cls(category_paths, resolution) for category_paths in all_category_paths.values()]
     
-    def __init__(self, source_paths, resolution, transforms=None, store_in_memory=False):
+    def __init__(self, source_paths, resolution, store_in_memory=False):
         super().__init__()
         self.source_paths = source_paths
-        self.transforms = transforms
         self._base_resolution = resolution
         self.dataset_attrs=None
 
