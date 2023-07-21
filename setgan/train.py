@@ -17,9 +17,6 @@ import json
 import tempfile
 import torch
 
-os.chdir('..')
-print(os.getcwd())
-
 import models.styleganxl.legacy as legacy
 
 import dnnlib
