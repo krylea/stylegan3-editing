@@ -22,7 +22,7 @@ sys.path.append(os.getcwd())
 import models.styleganxl.legacy as legacy
 
 import dnnlib
-from setgan.training_loop import training_loop
+import setgan.training_loop as training_loop
 #from metrics import metric_main
 from torch_utils import training_stats
 from torch_utils import custom_ops
