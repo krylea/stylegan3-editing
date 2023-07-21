@@ -202,14 +202,15 @@ def main(**kwargs):
     c.data_loader_kwargs = dnnlib.EasyDict(pin_memory=True, prefetch_factor=2)
 
     # Training set.
-    c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
-    if opts.cond and not c.training_set_kwargs.use_labels:
-        raise click.ClickException('--cond=True requires labels specified in dataset.json')
-    c.training_set_kwargs.use_labels = opts.cond
-    c.training_set_kwargs.xflip = opts.mirror
+    #c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
+    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, path=opts.data)
+    #if opts.cond and not c.training_set_kwargs.use_labels:
+    #    raise click.ClickException('--cond=True requires labels specified in dataset.json')
+    #c.training_set_kwargs.use_labels = opts.cond
+    #c.training_set_kwargs.xflip = opts.mirror
 
-    if opts.dataset_name is None:
-        opts.dataset_name = dataset_name
+    #if opts.dataset_name is None:
+    #    opts.dataset_name = dataset_name
 
     # Hyperparameters & settings.
     c.num_gpus = opts.gpus
@@ -317,7 +318,7 @@ def main(**kwargs):
     c.D_kwargs.backbone_kwargs.cond = opts.cond
 
     # Loss
-    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedGANLoss')
+    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedSetGANLoss')
     c.loss_kwargs.blur_init_sigma = 2  # Blur the images seen by the discriminator.
     c.loss_kwargs.blur_fade_kimg = 300
     c.loss_kwargs.pl_weight = 2.0
