@@ -9,6 +9,9 @@
 """Train a GAN using the techniques described in the paper
 "Alias-Free Generative Adversarial Networks"."""
 
+import sys
+sys.path.append('..')
+
 import os
 import click
 import re
