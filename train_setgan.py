@@ -229,8 +229,8 @@ def main(**kwargs):
     c.num_gpus = opts.gpus
     c.batch_size = opts.batch
     c.batch_gpu = opts.batch_gpu or opts.batch // opts.gpus
-    c.G_kwargs.channel_base = opts.cbase
-    c.G_kwargs.channel_max = opts.cmax
+    #c.G_kwargs.channel_base = opts.cbase
+    #c.G_kwargs.channel_max = opts.cmax
     c.G_opt_kwargs.lr = (0.002 if opts.cfg == 'stylegan2' else 0.0025) if opts.glr is None else opts.glr
     c.D_opt_kwargs.lr = opts.dlr
     c.metrics = opts.metrics
@@ -251,29 +251,29 @@ def main(**kwargs):
     # Base configuration.
     c.ema_kimg = c.batch_size * 10 / 32
     if opts.cfg == 'stylegan2':
-        c.G_kwargs.class_name = 'training.networks_stylegan2.Generator'
+        #c.G_kwargs.class_name = 'training.networks_stylegan2.Generator'
         c.G_reg_interval = 4  # Enable lazy regularization for G.
-        c.G_kwargs.fused_modconv_default = 'inference_only' # Speed up training by using regular convolutions instead of grouped convolutions.
+        #c.G_kwargs.fused_modconv_default = 'inference_only' # Speed up training by using regular convolutions instead of grouped convolutions.
 
     elif opts.cfg == 'fastgan':
-        c.G_kwargs = dnnlib.EasyDict(class_name='training.networks_fastgan.Generator',
-                                     cond=opts.cond, mapping_kwargs=dnnlib.EasyDict(),
-                                     synthesis_kwargs=dnnlib.EasyDict())
-        c.G_kwargs.synthesis_kwargs.lite = True
+        #c.G_kwargs = dnnlib.EasyDict(class_name='training.networks_fastgan.Generator',
+        #                             cond=opts.cond, mapping_kwargs=dnnlib.EasyDict(),
+        #                             synthesis_kwargs=dnnlib.EasyDict())
+        #c.G_kwargs.synthesis_kwargs.lite = True
         c.G_opt_kwargs.lr = c.D_opt_kwargs.lr = 0.0002
         c.G_opt_kwargs.lr = 0.002
 
-    else:
-        c.G_kwargs.class_name = 'training.networks_stylegan3_resetting.Generator'
-        c.G_kwargs.magnitude_ema_beta = 0.5 ** (c.batch_size / (20 * 1e3))
-        c.G_kwargs.channel_base *= 2  # increase for StyleGAN-XL
-        c.G_kwargs.channel_max *= 2   # increase for StyleGAN-XL
-        c.G_kwargs.conv_kernel = 1 if opts.cfg == 'stylegan3-r' else 3
-        c.G_kwargs.use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
+    #else:
+        #c.G_kwargs.class_name = 'training.networks_stylegan3_resetting.Generator'
+        #c.G_kwargs.magnitude_ema_beta = 0.5 ** (c.batch_size / (20 * 1e3))
+        #c.G_kwargs.channel_base *= 2  # increase for StyleGAN-XL
+        #c.G_kwargs.channel_max *= 2   # increase for StyleGAN-XL
+        #c.G_kwargs.conv_kernel = 1 if opts.cfg == 'stylegan3-r' else 3
+        #c.G_kwargs.use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
 
-        if opts.cfg == 'stylegan3-r':
-            c.G_kwargs.channel_base *= 2
-            c.G_kwargs.channel_max *= 2
+        #if opts.cfg == 'stylegan3-r':
+        #    c.G_kwargs.channel_base *= 2
+        #    c.G_kwargs.channel_max *= 2
 
     # Resume.
     if opts.resume is not None:
@@ -286,8 +286,9 @@ def main(**kwargs):
 
     # Performance-related toggles.
     if opts.fp32:
-        c.G_kwargs.num_fp16_res = 0
-        c.G_kwargs.conv_clamp = None
+        #c.G_kwargs.num_fp16_res = 0
+        #c.G_kwargs.conv_clamp = None
+        pass
     if opts.nobench:
         c.cudnn_benchmark = False
 
