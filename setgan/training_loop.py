@@ -25,13 +25,13 @@ from torch_utils import training_stats
 from torch_utils.ops import conv2d_gradfix
 from torch_utils.ops import grid_sample_gradfix
 
-import legacy
-from metrics import metric_main
+import models.styleganxl.legacy as legacy
+#from metrics import metric_main
 
 import setgan.safe_dataset as safe_dataset
 
 from setgan.dataset import ImageMultiSetGenerator, ImagesDataset
-from setgan.models.setgan import SetGAN
+from models.setgan.setgan import SetGAN
 
 STEP_INTERVAL=1000
 
@@ -341,7 +341,7 @@ def training_loop(
             #all_gen_c = [phase_gen_c.split(batch_gpu) for phase_gen_c in all_gen_c.split(batch_size)]
 
         # Execute training phases.
-        for phase, phase_gen_z, phase_gen_c in zip(phases, all_gen_s):
+        for phase, phase_gen_s in zip(phases, all_gen_s):
             if batch_idx % phase.interval != 0:
                 continue
             if phase.start_event is not None:
@@ -490,6 +490,7 @@ def training_loop(
 
         # Evaluate metrics.
         # if (snapshot_data is not None) and (len(metrics) > 0):
+        '''
         if cur_tick and (snapshot_data is not None) and (len(metrics) > 0):
             if rank == 0:
                 print('Evaluating metrics...')
@@ -512,6 +513,7 @@ def training_loop(
                     # save curr iteration number (directly saving it to pkl leads to problems with multi GPU)
                     with open(cur_nimg_txt, 'w') as f:
                         f.write(str(cur_nimg))
+        '''
 
         del snapshot_data # conserve memory
 
