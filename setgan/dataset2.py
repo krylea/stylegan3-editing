@@ -29,6 +29,7 @@ class Dataset():
         self._zipfile = None
         self._raw_labels = None
         self._use_labels = use_labels
+        self.resolution = resolution
 
         if os.path.isdir(self._path):
             self._type = 'dir'
@@ -135,13 +136,14 @@ class Dataset():
         # next create objects for each class
         image_classes = []
         for k in range(num_labels):
-            image_classes.append(ImageFolderDatasetWithPreprocessing(fname_groups[k]))
+            image_classes.append(ImageFolderDatasetWithPreprocessing(fname_groups[k]), base_resolution = self.resolution)
         
         return image_classes
 
 class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
     def __init__(self,
         fnames,                 # fnames for images of this class
+        base_resolution,        # base resolution
         raw_shape = None,       # Shape of the raw image data (NCHW).
         max_size    = None,     # Artificially limit the size of the dataset. None = no limit. Applied before xflip. is zero.
         xflip       = False,    # Artificially double the size of the dataset via x-flips. Applied after max_size.
@@ -149,6 +151,8 @@ class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
     ):
         self.fnames = fnames
         self._zipfile = None
+
+        self._base_resolution = base_resolution
         
         self.dataset_attrs=None
             
@@ -243,6 +247,13 @@ class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
 
         return img
 
+    def _open_file(self, fname):
+        if self._type == 'dir':
+            return open(os.path.join(self._path, fname), 'rb')
+        if self._type == 'zip':
+            return self._get_zipfile().open(fname, 'r')
+        return None
+    
     @property
     def image_shape(self):
         return list(self._raw_shape[1:])
