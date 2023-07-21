@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 import math
 
-from src.setgan.utils import masked_softmax
+from setgan.utils import masked_softmax
 
 
 class MHA(nn.Module):
