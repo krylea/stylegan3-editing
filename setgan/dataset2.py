@@ -5,6 +5,7 @@ from PIL import Image
 from torch.utils.data import Dataset, ConcatDataset, Subset, IterableDataset, random_split, RandomSampler
 import torch
 
+import zipfile
 
 import torchvision
 import torchvision.transforms.functional as TF
@@ -18,13 +19,16 @@ import random
 class Dataset():
     def __init__(self,
         path,                   # path to the zip file
+        name,                   # Name of the dataset
+        raw_labels = None,
+        use_labels = True, 
         resolution      = None, # Ensure specific resolution, None = highest available.
-        name,                   # Name of the dataset.
-        **super_kwargs,         # Additional arguments for the Dataset base class.
     ):
         self._path = path
         self._name = name
         self._zipfile = None
+        self._raw_labels = None
+        self._use_labels = use_labels
 
         if os.path.isdir(self._path):
             self._type = 'dir'
@@ -35,19 +39,25 @@ class Dataset():
         else:
             raise IOError('Path must point to a directory or zip')
 
-        PIL.Image.init()
-        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in PIL.Image.EXTENSION)
+        Image.init()
+        self._image_fnames = sorted(fname for fname in self._all_fnames if self._file_ext(fname) in Image.EXTENSION)
         if len(self._image_fnames) == 0:
             raise IOError('No image files found in the specified path')
 
         name = os.path.splitext(os.path.basename(self._path))[0]
-        raw_shape = [len(self._image_fnames)] + list(self._load_raw_image(0).shape)
-        if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
-            raise IOError('Image files do not match the specified resolution')
-        super().__init__(name=name, raw_shape=raw_shape, **super_kwargs)
+    
+    def _file_ext(self, fname):
+        return os.path.splitext(fname)[1].lower()
 
+    def _get_zipfile(self):
+        if hasattr(self, '_zipfile') and self._zipfile is not None:
+            return self._zipfile  # Already loaded, use existing
+        else:
+            self._zipfile = zipfile.ZipFile(self._path, 'r')  # Open the ZIP file
+            return self._zipfile
+    
     def _load_raw_labels(self):
-        fname = 'dataset.json'
+        fname = 'images/dataset.json'
         if fname not in self._all_fnames:
             return None
         with self._open_file(fname) as f:
@@ -55,32 +65,32 @@ class Dataset():
         if labels is None:
             return None
         labels = dict(labels)
-        labels = [labels[fname.replace('\\', '/')] for fname in self._image_fnames]
+        labels = [labels[os.path.basename(fname.replace('\\', '/'))] for fname in self._image_fnames]
         labels = np.array(labels)
         labels = labels.astype({1: np.int64, 2: np.float32}[labels.ndim])
         return labels
 
     def _get_raw_labels(self):
         if self._raw_labels is None:
-            self._raw_labels = self._load_raw_labels() if self._use_labels else None
+            if self._use_labels == True:
+                self._raw_labels = self._load_raw_labels()
+            else:
+                self._raw_labels = None
             if self._raw_labels is None:
-                self._raw_labels = np.zeros([self._raw_shape[0], 0], dtype=np.float32)
+                self._raw_labels = np.zeros([len(self._image_fnames), 0], dtype=np.float32)
             assert isinstance(self._raw_labels, np.ndarray)
-            assert self._raw_labels.shape[0] == self._raw_shape[0]
+            # assert self._raw_labels.shape[0] == self._raw_shape[0]
             assert self._raw_labels.dtype in [np.float32, np.int64]
             if self._raw_labels.dtype == np.int64:
                 assert self._raw_labels.ndim == 1
                 assert np.all(self._raw_labels >= 0)
         return self._raw_labels
 
-    def close(self): # to be overridden by subclass
-        pass
-
-    def _load_raw_image(self, raw_idx): # to be overridden by subclass
-        raise NotImplementedError
-
-    def _load_raw_labels(self): # to be overridden by subclass
-        raise NotImplementedError
+    def _load_raw_image(self, raw_idx):
+        fname = self._image_fnames[raw_idx]
+        with self._open_file(fname) as f:
+            image = Image.open(f).convert('RGB')
+        return np.array(image)
 
     def __getstate__(self):
         return dict(self.__dict__, _raw_labels=None)
@@ -91,14 +101,6 @@ class Dataset():
         except:
             pass
 
-    def get_label(self, idx):
-        label = self._get_raw_labels()[self._raw_idx[idx]]
-        if label.dtype == np.int64:
-            onehot = np.zeros(self.label_shape, dtype=np.float32)
-            onehot[label] = 1
-            label = onehot
-        return label.copy()
-
     def get_details(self, idx):
         d = dnnlib.EasyDict()
         d.raw_idx = int(self._raw_idx[idx])
@@ -106,21 +108,30 @@ class Dataset():
         d.raw_label = self._get_raw_labels()[d.raw_idx].copy()
         return d
 
+    def _open_file(self, fname):
+        if self._type == 'dir':
+            return open(os.path.join(self._path, fname), 'rb')
+        if self._type == 'zip':
+            return self._get_zipfile().open(fname, 'r')
+        return None
+    
     def splitfnames(self):
-        all_labels = self.get_raw_labels()
+        all_labels = self._get_raw_labels()
         all_fnames = self._image_fnames
-
         unique_labels = np.unique(all_labels)
         num_labels = unique_labels.size
-        fname_groups = [] # will contain a list of lists (second layer is for each class)
+        fname_groups = []  # will contain a list of lists (second layer is for each class)
         for i in range(num_labels):
             lis = []
             fname_groups.append(lis)
         
         for j in range(len(all_fnames)):
             idx = np.where(unique_labels == all_labels[j])
-            fname_groups[idx].append(all_fnames[j])
-        
+            if idx[0].size == 0:
+                print(f"No matching label found for {all_fnames[j]}")
+            else:
+                fname_groups[idx[0][0]].append(all_fnames[j])
+
         # next create objects for each class
         image_classes = []
         for k in range(num_labels):
@@ -131,21 +142,21 @@ class Dataset():
 class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
     def __init__(self,
         fnames,                 # fnames for images of this class
-        raw_shape,              # Shape of the raw image data (NCHW).
-        max_size    = None,     # Artificially limit the size of the dataset. None = no limit. Applied before xflip.
-        use_labels  = False,    # Enable conditioning labels? False = label dimension is zero.
+        raw_shape = None,       # Shape of the raw image data (NCHW).
+        max_size    = None,     # Artificially limit the size of the dataset. None = no limit. Applied before xflip. is zero.
         xflip       = False,    # Artificially double the size of the dataset via x-flips. Applied after max_size.
         random_seed = 1,        # Random seed to use when applying max_size.
     ):
-        self._raw_shape = list(raw_shape)
-        self._use_labels = use_labels
-        self._raw_labels = None
-        self._label_shape = None
         self.fnames = fnames
         self._zipfile = None
         
         self.dataset_attrs=None
-
+            
+        raw_shape = [len(self.fnames)] + list(self._load_raw_image(0).shape)
+        if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
+            raise IOError('Image files do not match the specified resolution')
+        # super().__init__(name=name, raw_shape=raw_shape, **super_kwargs)
+        
         # Apply max_size.
         self._raw_idx = np.arange(self._raw_shape[0], dtype=np.int64)
         self._base_raw_idx = copy.deepcopy(self._raw_idx)
@@ -178,15 +189,12 @@ class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
     @staticmethod
     def _file_ext(fname):
         return os.path.splitext(fname)[1].lower()
-
-    def _open_file(self, fname):
-        return open(fname, 'rb')
-
+    
     def __getstate__(self):
         return super().__getstate__()
 
     def _load_raw_image(self, raw_idx):
-        fname = self._image_fnames[raw_idx]
+        fname = self.fnames[raw_idx]
         with self._open_file(fname) as f:
             if pyspng is not None and self._file_ext(fname) == '.png':
                 image = pyspng.load(f.read())
