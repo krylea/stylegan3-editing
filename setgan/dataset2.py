@@ -15,6 +15,75 @@ import cv2
 import math
 import os
 import random
+import json
+import sys
+import copy
+from typing import Callable, Optional, Tuple, Union
+import PIL
+import functools
+
+try:
+    import pyspng
+except ImportError:
+    pyspng = None
+
+
+import models.styleganxl.dnnlib as dnnlib
+
+
+def error(msg):
+    print('Error: ' + msg)
+    sys.exit(1)
+
+def make_transform(
+    transform: Optional[str],
+    output_width: Optional[int],
+    output_height: Optional[int]
+) -> Callable[[np.ndarray], Optional[np.ndarray]]:
+    def scale(width, height, img):
+        w = img.shape[1]
+        h = img.shape[0]
+        if width == w and height == h:
+            return img
+        img = PIL.Image.fromarray(img)
+        ww = width if width is not None else w
+        hh = height if height is not None else h
+        img = img.resize((ww, hh), PIL.Image.LANCZOS)
+        return np.array(img)
+
+    def center_crop(width, height, img):
+        crop = np.min(img.shape[:2])
+        img = img[(img.shape[0] - crop) // 2 : (img.shape[0] + crop) // 2, (img.shape[1] - crop) // 2 : (img.shape[1] + crop) // 2]
+        img = PIL.Image.fromarray(img, 'RGB')
+        img = img.resize((width, height), PIL.Image.LANCZOS)
+        return np.array(img)
+
+
+    def center_crop_wide(width, height, img):
+        ch = int(np.round(width * img.shape[0] / img.shape[1]))
+        if img.shape[1] < width or ch < height:
+            return None
+
+        img = img[(img.shape[0] - ch) // 2 : (img.shape[0] + ch) // 2]
+        img = PIL.Image.fromarray(img, 'RGB')
+        img = img.resize((width, height), PIL.Image.LANCZOS)
+        img = np.array(img)
+
+        canvas = np.zeros([width, width, 3], dtype=np.uint8)
+        canvas[(width - height) // 2 : (width + height) // 2, :] = img
+        return canvas
+
+    if transform is None:
+        return functools.partial(scale, output_width, output_height)
+    if transform == 'center-crop':
+        if (output_width is None) or (output_height is None):
+            raise Exception('must specify --resolution=WxH when using ' + transform + 'transform')
+        return functools.partial(center_crop, output_width, output_height)
+    if transform == 'center-crop-wide':
+        if (output_width is None) or (output_height is None):
+            raise Exception('must specify --resolution=WxH when using ' + transform + ' transform')
+        return functools.partial(center_crop_wide, output_width, output_height)
+    assert False, 'unknown transform'
 
 class Dataset():
     def __init__(self,
@@ -157,7 +226,7 @@ class ImageFolderDatasetWithPreprocessing(torch.utils.data.Dataset):
         self.dataset_attrs=None
             
         raw_shape = [len(self.fnames)] + list(self._load_raw_image(0).shape)
-        if resolution is not None and (raw_shape[2] != resolution or raw_shape[3] != resolution):
+        if _base_resolution is not None and (raw_shape[2] != _base_resolution or raw_shape[3] != _base_resolution):
             raise IOError('Image files do not match the specified resolution')
         # super().__init__(name=name, raw_shape=raw_shape, **super_kwargs)
         
