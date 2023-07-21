@@ -112,8 +112,8 @@ class ProjectedSetGANLoss(Loss):
                     getattr(self.G.synthesis, name).requires_grad_(name in self.G.head_layer_names)
 
             with torch.autograd.profiler.record_function('Gmain_forward'):
-                gen_img, _gen_ws = self.run_G(gen_s, gen_c)
-                gen_logits = self.run_D(gen_img, gen_c, blur_sigma=blur_sigma)
+                gen_img, _gen_ws = self.run_G(reference_set, gen_s)
+                gen_logits = self.run_D(reference_set, gen_img, blur_sigma=blur_sigma)
 
                 loss_Gmain = sum([(-l).mean() for l in gen_logits])
                 gen_logits = torch.cat(gen_logits)
@@ -153,8 +153,8 @@ class ProjectedSetGANLoss(Loss):
         # Dmain: Minimize logits for generated images.
         if do_Dmain:
             with torch.autograd.profiler.record_function('Dgen_forward'):
-                gen_img, _gen_ws = self.run_G(gen_s, gen_c, update_emas=True)
-                gen_logits = self.run_D(gen_img, gen_c, blur_sigma=blur_sigma)
+                gen_img, _gen_ws = self.run_G(reference_set, gen_s, update_emas=True)
+                gen_logits = self.run_D(reference_set, gen_img, blur_sigma=blur_sigma)
                 loss_Dgen = sum([(F.relu(torch.ones_like(l) + l)).mean() for l in gen_logits])
                 gen_logits = torch.cat(gen_logits)
 
@@ -167,8 +167,8 @@ class ProjectedSetGANLoss(Loss):
             # Dmain: Maximize logits for real images.
             name = 'Dreal'
             with torch.autograd.profiler.record_function(name + '_forward'):
-                real_img_tmp = real_img.detach().requires_grad_(False)
-                real_logits = self.run_D(real_img_tmp, real_c, blur_sigma=blur_sigma)
+                reference_set_tmp = reference_set.detach().requires_grad_(False)
+                real_logits = self.run_D(reference_set_tmp, candidate_set, blur_sigma=blur_sigma)
                 loss_Dreal = sum([(F.relu(torch.ones_like(l) - l)).mean() for l in real_logits])
                 real_logits = torch.cat(real_logits)
 

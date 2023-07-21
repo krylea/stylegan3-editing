@@ -304,7 +304,7 @@ def main(**kwargs):
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
-        class_name='pg_modules.discriminator.ProjectedDiscriminator',
+        class_name='setgan.models.discriminator.ProjectedSetDiscriminator',
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
         interp224=(c.training_set_kwargs.resolution < 224),
@@ -317,7 +317,7 @@ def main(**kwargs):
     c.D_kwargs.backbone_kwargs.cond = opts.cond
 
     # Loss
-    c.loss_kwargs = dnnlib.EasyDict(class_name='training.loss.ProjectedGANLoss')
+    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedGANLoss')
     c.loss_kwargs.blur_init_sigma = 2  # Blur the images seen by the discriminator.
     c.loss_kwargs.blur_fade_kimg = 300
     c.loss_kwargs.pl_weight = 2.0

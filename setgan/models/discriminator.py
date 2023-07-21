@@ -126,7 +126,7 @@ class MultiScaleD(nn.Module):
         all_logits = torch.cat(all_logits, dim=1)
         return all_logits
 
-class ProjectedDiscriminator(torch.nn.Module):
+class ProjectedSetDiscriminator(torch.nn.Module):
     def __init__(
         self,
         backbones,
