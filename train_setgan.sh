@@ -48,6 +48,6 @@ then
     argstring="$argstring --resume $ckpt"
 fi
 
-python setgan/train.py $argstring
+python train_setgan.py $argstring
 
 
