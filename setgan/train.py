@@ -17,6 +17,8 @@ import json
 import tempfile
 import torch
 
+sys.path.append(os.getcwd())
+
 import models.styleganxl.legacy as legacy
 
 import dnnlib
