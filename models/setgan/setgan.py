@@ -68,7 +68,7 @@ class SetGAN(nn.Module):
             parameter.requires_grad_(False)
 
         if self.opts.restyle_mode == 'encoder':
-            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg)
+            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.opts.n_styles)
 
 
     def set_encoder(self):
