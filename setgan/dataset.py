@@ -154,7 +154,7 @@ class ImagesDataset(Dataset):
             self.dataset = [x for x in self]
 
         test_img = self[0]
-        self.image_shape = test_img.size()
+        self.image_shape = test_img.shape
         self.num_channels = self.image_shape[0]
             
 
