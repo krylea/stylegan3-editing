@@ -10,7 +10,7 @@ dataset_paths = {
 
     'imagenet': '/scratch/hdd001/datasets/imagenet/train',
     
-	'celeba': Path('/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt')
+	'celeba': Path('/scratch/ssd002/datasets/celeba/Img/img_align_celeba')
 }
 
 model_paths = {

@@ -149,7 +149,9 @@ class ImagesDataset(Dataset):
 
     @classmethod
     def from_folder_by_attributes(cls, path, resolution):
-        with open(path, 'r') as infile:
+        file_name = "/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt"
+
+        with open(file_name, 'r') as infile:
             lines = infile.readlines()
 
         # Remove the first line which is the total number of images
@@ -170,6 +172,8 @@ class ImagesDataset(Dataset):
             # image file name
             image_file = tokens.pop(0)
             
+            full_image_path = os.path.join(path, image_file)
+
             # numpy array of integers
             attributes = np.array([int(attr) for attr in tokens])
 
@@ -178,11 +182,47 @@ class ImagesDataset(Dataset):
 
             # add each image file to the corresponding categories
             for i in idx:
-                images_by_category[i].append(image_file)
+                images_by_category[i].append(full_image_path)
 
         datasets_by_category = [cls(imgs, resolution) for imgs in images_by_category]
 
         return datasets_by_category
+
+    @classmethod
+    def from_folder_by_attributes(cls, path, resolution):
+        file_name = "/scratch/ssd002/datasets/celeba/Anno/identity_CelebA.txt"
+
+        with open(file_name, 'r') as infile:
+            lines = infile.readlines()
+
+        # Determine maximum identity value
+        identities = []
+        for line in lines:
+            tokens = line.split()
+            identities.append(int(tokens[1]))
+
+        num_identities = max(identities)
+
+        # each list will hold images of a certain identity
+        images_by_identity = [[] for _ in range(num_identities)]
+
+        # lines contain all the lines for the images and their identity
+        for line in lines:
+            tokens = line.split()
+
+            # image file name
+            image_file = tokens[0]
+            
+            # Full path to the image
+            full_image_path = os.path.join(path, image_file)
+
+            # Identity value starts from 1
+            identity_index = int(tokens[1]) - 1
+            images_by_identity[identity_index].append(full_image_path)
+
+        datasets_by_identity = [cls(imgs, resolution) for imgs in images_by_identity]
+
+        return datasets_by_identity
     
     def __init__(self, source_paths, resolution, store_in_memory=False):
         super().__init__()
@@ -264,9 +304,11 @@ def load_imagenet(resolution):
 def load_vggface(resolution):
     return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
 
-def load_celeba(resolution):
+def load_celeba_by_attributes(resolution):
     return ImagesDataset.from_folder_by_attributes(dataset_paths['celeba'], resolution)
 
+def load_celeba_by_identities(resolution):
+    return ImagesDataset.from_folder_by_identities(dataset_paths['celeba'], resolution)
 
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
