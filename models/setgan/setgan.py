@@ -14,6 +14,7 @@ from setgan.utils import to_images, to_imgset, to_set
 
 class StyleAttention(nn.Module):
     def __init__(self, opts):
+        super().__init__()
         self.n_styles = opts.n_styles
         attns = []
         style_concats = []
