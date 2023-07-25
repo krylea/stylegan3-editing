@@ -208,6 +208,7 @@ def parse_comma_separated_list(s):
 @click.option('--exp_name', type=str, required=True)
 @click.option('--reference_size', type=int, nargs=2, default=(7,12))
 @click.option('--candidate_size', type=int, nargs=2, default=(1,4))
+@click.option('--restyle_mode', type=click.Choice(['none', 'encoder', 'resetgan', 'resetgan2']), default='encoder')
 
 def main(**kwargs):
     # Initialize config.

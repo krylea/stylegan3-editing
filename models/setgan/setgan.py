@@ -10,6 +10,7 @@ from utils import common
 from models.setgan.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
 from setgan.utils import to_images, to_imgset, to_set
+from models.setgan.restyle import Restyle
 
 
 class StyleAttention(nn.Module):
@@ -65,6 +66,9 @@ class SetGAN(nn.Module):
 
         for parameter in self.decoder.mapping.parameters():
             parameter.requires_grad_(False)
+
+        if self.opts.restyle_mode == 'encoder':
+            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg)
 
 
     def set_encoder(self):
