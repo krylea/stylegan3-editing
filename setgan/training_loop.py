@@ -20,10 +20,10 @@ import torch
 import torch.nn.functional as F
 import dnnlib
 import pickle
-from torch_utils import misc
-from torch_utils import training_stats
-from torch_utils.ops import conv2d_gradfix
-from torch_utils.ops import grid_sample_gradfix
+from models.styleganxl.torch_utils import misc
+from models.styleganxl.torch_utils import training_stats
+from models.styleganxl.torch_utils.ops import conv2d_gradfix
+from models.styleganxl.torch_utils.ops import grid_sample_gradfix
 
 import models.styleganxl.legacy as legacy
 #from metrics import metric_main
