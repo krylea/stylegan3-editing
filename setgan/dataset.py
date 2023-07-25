@@ -354,6 +354,9 @@ class ImageMultiSetGenerator():
     
     def _build_sets_from_dataset2(self, dataset_id, set_sizes, rng=None):
         def _get_image(img):
+            if not isinstance(img, torch.Tensor):
+                img = torch.tensor(img)
+                
             if self.transforms is not None:
                 img = self.transforms(img)
             if self.flatten:
