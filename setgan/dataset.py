@@ -146,6 +146,43 @@ class ImagesDataset(Dataset):
                 all_category_paths[cate] = []
             all_category_paths[cate].append(path)
         return [cls(category_paths, resolution) for category_paths in all_category_paths.values()]
+
+    @classmethod
+    def from_folder_by_attributes(cls, path, resolution):
+        with open(path, 'r') as infile:
+            lines = infile.readlines()
+
+        # Remove the first line which is the total number of images
+        lines.pop(0)
+
+        # Get the categories from the second line
+        categories = lines.pop(0).split()
+
+        num_categories = len(categories)
+
+        # List of lists, where each list will hold images of a category
+        images_by_category = [[] for _ in range(num_categories)]
+
+        # lines contain all the lines for the images and their attributes
+        for line in lines:
+            tokens = line.split()
+
+            # image file name
+            image_file = tokens.pop(0)
+            
+            # numpy array of integers
+            attributes = np.array([int(attr) for attr in tokens])
+
+            # Get indices where value is 1
+            idx = np.where(attributes==1)[0]
+
+            # add each image file to the corresponding categories
+            for i in idx:
+                images_by_category[i].append(image_file)
+
+        datasets_by_category = [cls(imgs, resolution) for imgs in images_by_category]
+
+        return datasets_by_category
     
     def __init__(self, source_paths, resolution, store_in_memory=False):
         super().__init__()
@@ -226,6 +263,9 @@ def load_imagenet(resolution):
 
 def load_vggface(resolution):
     return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
+
+def load_celeba(resolution):
+    return ImagesDataset.from_folder_by_attributes(dataset_paths['celeba'], resolution)
 
 
 def build_datasets(dataset_name, resolution):

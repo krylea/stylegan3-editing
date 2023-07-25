@@ -8,7 +8,9 @@ dataset_paths = {
 	'ffhq': '/ssd003/projects/ffhq/images1024x1024/',
 	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
 
-    'imagenet': '/scratch/hdd001/datasets/imagenet/train'
+    'imagenet': '/scratch/hdd001/datasets/imagenet/train',
+    
+	'celeba': Path('/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt')
 }
 
 model_paths = {
