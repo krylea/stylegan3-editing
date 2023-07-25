@@ -13,7 +13,7 @@ from models.styleganxl.feature_networks.constants import VITS
 
 from torch_utils.misc import copy_params_and_buffers
 
-from setgan.models.set import MultiSetTransformerEncoder, MultiSetTransformer
+from models.setgan.set import MultiSetTransformerEncoder, MultiSetTransformer
 from setgan.utils import to_images, to_imgset, to_set
 
 class SingleDisc(nn.Module):
