@@ -5,17 +5,23 @@ import torch.nn as nn
 from setgan.utils import to_images
 
 class Restyle(nn.Module):
-    def __init__(self, encoder, decoder, latent_avg):
+    def __init__(self, encoder, decoder, latent_avg, n_styles, device=torch.device("cuda")):
         self.encoder = encoder
         self.decoder = decoder
         self.latent_avg = latent_avg
+        self.n_styles = n_styles
+        self.device = device
+        self.avg_image = self.decoder(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),
+                            input_code=True,
+                            return_latents=False)[0]
+        self.avg_image = self.avg_image.to(self.device).float().detach()
     
-    def forward(self, x, y0, iters=3, return_latents=False, return_intermediates=False):
-        Y = [y0]
+    def forward(self, x, iters=3, return_latents=False, return_intermediates=False):
+        Y = [self.avg_image]
         Z = [self.latent_avg]
         #z =  # latent codes
         for i in range(1, iters+1):
-            z = Z[-1] + self.encoder(x, Y[-1]) # add output to previous z?
+            z = Z[-1] + self.encoder(torch.cat(x, Y[-1], dim=1)) # add output to previous z?
             y = self.decoder(z)
             Y.append(y)
             Z.append(z)
