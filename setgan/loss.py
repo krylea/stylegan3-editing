@@ -93,7 +93,7 @@ class ProjectedSetGANLoss(Loss):
 
         return self.D(reference_set, imgs)
 
-    def accumulate_gradients(self, phase, reference_set, candidate_set, real_c, gen_s, gen_c, gain, cur_nimg):
+    def accumulate_gradients(self, phase, reference_set, candidate_set, gen_s, gain, cur_nimg):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']
         do_Gmain = (phase in ['Gmain', 'Gboth'])
         do_Dmain = (phase in ['Dmain', 'Dboth'])
@@ -118,11 +118,13 @@ class ProjectedSetGANLoss(Loss):
                 loss_Gmain = sum([(-l).mean() for l in gen_logits])
                 gen_logits = torch.cat(gen_logits)
 
+                '''
                 if self.cls_weight:
                     gen_img = self.norm(gen_img.add(1).div(2)) 
                     guidance_loss = self.cls_guidance_loss(self.classifier(gen_img), gen_c.argmax(1))
                     loss_Gmain += self.cls_weight * guidance_loss
                     training_stats.report('Loss/G/guidance_loss', guidance_loss)
+                '''
 
                 training_stats.report('Loss/scores/fake', gen_logits)
                 training_stats.report('Loss/signs/fake', gen_logits.sign())
@@ -136,7 +138,7 @@ class ProjectedSetGANLoss(Loss):
         if start_plreg and self.pl_weight and phase in ['Greg', 'Gboth']:
             with torch.autograd.profiler.record_function('Gpl_forward'):
                 batch_size = gen_s.shape[0] // self.pl_batch_shrink
-                gen_img, gen_ws = self.run_G(gen_s[:batch_size], gen_c[:batch_size])
+                gen_img, gen_ws = self.run_G(reference_set[:batch_size], gen_s[:batch_size])
                 pl_noise = torch.randn_like(gen_img) / np.sqrt(gen_img.shape[2] * gen_img.shape[3])
                 with torch.autograd.profiler.record_function('pl_grads'), conv2d_gradfix.no_weight_gradients(self.pl_no_weight_grad):
                     pl_grads = torch.autograd.grad(outputs=[(gen_img * pl_noise).sum()], inputs=[gen_ws], create_graph=True, only_inputs=True)[0]
