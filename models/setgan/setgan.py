@@ -16,6 +16,7 @@ class StyleAttention(nn.Module):
     def __init__(self, opts):
         super().__init__()
         self.n_styles = opts.n_styles
+        self.opts = opts
         attns = []
         style_concats = []
         use_set_decoder = opts.use_set_decoder if hasattr(opts, 'use_set_decoder') else True
@@ -26,7 +27,7 @@ class StyleAttention(nn.Module):
             attns.append(attns_i)
         self.attns = nn.ModuleList(attns)
 
-        if not self.opts.disable_style_concat:
+        if not opts.disable_style_concat:
             self.style_concats = nn.ModuleList(style_concats)
             for layer in self.style_concats:
                 with torch.no_grad():
@@ -37,7 +38,7 @@ class StyleAttention(nn.Module):
         transformed_codes = []
         for i in range(self.n_styles):
             codes_i = self.attns[i](s, z[:,:,i])
-            if not self.args.disable_style_concat:
+            if not self.opts.disable_style_concat:
                 codes_i = self.style_concats[i](torch.cat([codes_i, s], dim=-1))
             else:
                 codes_i = codes_i + s
