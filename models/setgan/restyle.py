@@ -20,7 +20,7 @@ class Restyle(nn.Module):
         Z = [self.latent_avg]
         #z =  # latent codes
         for i in range(1, iters+1):
-            z = Z[-1] + self.encoder(torch.cat(x, Y[-1], dim=1)) # add output to previous z?
+            z = Z[-1] + self.encoder(torch.cat([x, Y[-1]], dim=1)) # add output to previous z?
             y = self.decoder.synthesis(z)
             Y.append(y)
             Z.append(z)
