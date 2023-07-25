@@ -52,7 +52,7 @@ argstring="$argstring \
 --candidate_size 1 4 \
 --exp_name $EXP_NAME"
 
-if [ -n $ckpt ]
+if [[ -n $ckpt ]]
 then
     argstring="$argstring --resume $ckpt"
 fi
