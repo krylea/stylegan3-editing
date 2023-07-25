@@ -146,12 +146,16 @@ class ImagesDataset(Dataset):
     def __init__(self, source_paths, resolution, store_in_memory=False):
         super().__init__()
         self.source_paths = source_paths
-        self._base_resolution = resolution
+        self.resolution = self._base_resolution = resolution
         self.dataset_attrs=None
 
         self.dataset = None
         if store_in_memory:
             self.dataset = [x for x in self]
+
+        test_img = self[0]
+        self.image_shape = test_img.size()
+        self.num_channels = self.image_shape[0]
             
 
     def __len__(self):

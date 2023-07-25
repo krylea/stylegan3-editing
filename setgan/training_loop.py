@@ -170,8 +170,8 @@ def training_loop(
     if rank == 0:
         print()
         print('Num images: ', len(training_set))
-        print('Image shape:', training_set.image_shape)
-        print('Label shape:', training_set.label_shape)
+        #print('Image shape:', training_set.image_shape)
+        #print('Label shape:', training_set.label_shape)
         print()
 
     # Construct networks.
