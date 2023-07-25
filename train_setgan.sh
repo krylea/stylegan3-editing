@@ -37,7 +37,7 @@ fi
 
 argstring="$argstring \
 --encoder_type ProgressiveBackboneEncoder \
---input_nc 3 \
+--input_nc 6 \
 --n_styles 18 \
 --reference_size 7 12 \
 --candidate_size 1 4 \

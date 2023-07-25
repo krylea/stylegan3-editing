@@ -77,7 +77,7 @@ class SetGAN(nn.Module):
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
-            self.decoder = SG3Generator(checkpoint_path=None).decoder
+            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weight).decoder
             self.decoder.load_state_dict(self._get_keys(ckpt, 'decoder', remove=["synthesis.input.transform"]), strict=False)
             self._load_latent_avg(ckpt)
         else:
