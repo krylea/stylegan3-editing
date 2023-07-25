@@ -114,7 +114,8 @@ class MultiScaleD(nn.Module):
         self.mini_discs = nn.ModuleDict(mini_discs)
 
     def load_weights(self, source):
-        for disc, src_disc in zip(self.mini_discs, source.mini_discs):
+        for k in self.mini_discs.keys():
+            disc, src_disc = self.mini_discs[k], source.mini_discs[k]
             disc.load_weights(src_disc)
 
     def forward(self, r_features, x_features, rec=False):
@@ -168,10 +169,12 @@ class ProjectedSetDiscriminator(torch.nn.Module):
     def load_weights(self, source):
         rg = list(self.parameters())[0].requires_grad
         self.requires_grad_(False)
-        for feat, src_feat in zip(self.feature_networks, source.feature_networks):
+        for k in self.feature_networks.keys():
+            feat, disc = self.feature_networks[k], self.discriminators[k]
+            src_feat, src_disc = source.feature_networks[k], source.discriminators[k]
             copy_params_and_buffers(src_feat, feat)
-        for disc, src_disc in zip(self.discriminators, source.discriminators):
             disc.load_weights(src_disc)
+            
         self.requires_grad_(rg)
 
     def train(self, mode=True):
