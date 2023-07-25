@@ -30,7 +30,7 @@ import models.styleganxl.legacy as legacy
 
 import setgan.safe_dataset as safe_dataset
 
-from setgan.dataset import ImageMultiSetGenerator, ImagesDataset
+from setgan.dataset import ImageMultiSetGenerator, ImagesDataset, build_datasets
 from models.setgan.setgan import SetGAN
 
 STEP_INTERVAL=1000
@@ -165,7 +165,7 @@ def training_loop(
     #training_set = safe_dataset.SafeDataset(dnnlib.util.construct_class_by_name(**training_set_kwargs)) # subclass of training.dataset.Dataset
     #training_set_sampler = misc.InfiniteSampler(dataset=training_set, rank=rank, num_replicas=num_gpus, seed=random_seed)
     #training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
-    training_set = [safe_dataset.SafeDataset(x) for x in ImagesDataset.from_folders(**training_set_kwargs)]
+    training_set = [safe_dataset.SafeDataset(x) for x in build_datasets(**training_set_kwargs)]
     training_set_generator = ImageMultiSetGenerator(training_set, rank=rank, world_size=num_gpus)
     if rank == 0:
         print()

@@ -125,7 +125,6 @@ try:
 except ImportError:
     pyspng = None
 
-
 class ImagesDataset(Dataset):
     @classmethod
     def from_folder(cls, path, resolution):
@@ -220,6 +219,20 @@ class ImagesDataset(Dataset):
             raise Exception(f'Image {archive_fname} attributes must be equal across all images of the dataset.  Got:\n' + '\n'.join(err))
 
         return img
+
+from setgan.configs import dataset_paths
+def load_imagenet(resolution):
+    return ImagesDataset.from_folders(dataset_paths['imagenet'], resolution)
+
+def load_vggface(resolution):
+    return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
+
+
+def build_datasets(dataset_name, resolution):
+    if dataset_name == 'face':
+        return load_vggface(resolution)
+    elif dataset_name == 'imagenet':
+        return load_imagenet(resolution)
 
 
 

@@ -4,6 +4,7 @@ dataset_paths = {
 	'celeba_train': Path(''),
 	'celeba_test': Path(''),
 
+    'vggface': '../setgan2/datasets/vggface/train/',
 	'ffhq': '/ssd003/projects/ffhq/images1024x1024/',
 	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
 
