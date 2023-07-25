@@ -12,9 +12,7 @@ class Restyle(nn.Module):
         self.latent_avg = latent_avg
         self.n_styles = n_styles
         self.device = device
-        self.avg_image = self.decoder(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),
-                            input_code=True,
-                            return_latents=False)[0]
+        self.avg_image = self.decoder(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),None)[0]
         self.avg_image = self.avg_image.to(self.device).float().detach()
     
     def forward(self, x, iters=3, return_latents=False, return_intermediates=False):
@@ -23,7 +21,7 @@ class Restyle(nn.Module):
         #z =  # latent codes
         for i in range(1, iters+1):
             z = Z[-1] + self.encoder(torch.cat(x, Y[-1], dim=1)) # add output to previous z?
-            y = self.decoder(z)
+            y = self.decoder(z,None)
             Y.append(y)
             Z.append(z)
         
