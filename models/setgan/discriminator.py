@@ -103,11 +103,13 @@ class MultiScaleD(nn.Module):
         })
 
         mini_discs = []
+        set_discs = []
         for i, (cin, res) in enumerate(zip(self.disc_in_channels, self.disc_in_res)):
             start_sz = res if not patch else 16
             disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//4, patch=patch)
             set_i = MultiSetTransformer(**set_kwargs)
-            mini_discs += [str(i), disc_i, set_i],
+            mini_discs += [str(i), disc_i],
+            set_discs += [str(i), set_i],
 
         self.mini_discs = nn.ModuleDict(mini_discs)
 
@@ -117,7 +119,8 @@ class MultiScaleD(nn.Module):
 
     def forward(self, r_features, x_features, rec=False):
         all_logits = []
-        for k, disc, set in self.mini_discs.items():
+        for k in self.mini_discs.keys():
+            disc, set = self.mini_discs[k], self.set_discs[k]
             x_flat = to_images(x_features[k])
             r_flat = to_images(r_features[k])
             x_enc = disc(x_flat, None).view(x_flat.size(0), -1)
