@@ -18,6 +18,7 @@ import tempfile
 import torch
 
 sys.path.append(os.getcwd())
+sys.path.append('models/styleganxl/')
 
 import models.styleganxl.legacy as legacy
 
@@ -29,6 +30,8 @@ from torch_utils import custom_ops
 from torch_utils import misc
 
 from setgan.configs import dataset_paths, model_paths
+
+
 
 #----------------------------------------------------------------------------
 
