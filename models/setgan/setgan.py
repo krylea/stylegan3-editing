@@ -14,6 +14,7 @@ from setgan.utils import to_images, to_imgset, to_set
 
 class StyleAttention(nn.Module):
     def __init__(self, opts):
+        self.n_styles = opts.n_styles
         attns = []
         style_concats = []
         use_set_decoder = opts.use_set_decoder if hasattr(opts, 'use_set_decoder') else True
