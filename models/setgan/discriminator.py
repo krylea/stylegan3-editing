@@ -58,7 +58,7 @@ class SingleDisc(nn.Module):
         self.main = nn.Sequential(*layers)
 
     def load_weights(self, source):
-        rg = self.requires_grad
+        rg = list(self.parameters())[0].requires_grad
         self.requires_grad_(False)
         for layer, src_layer in zip(self.main[:-1], source.main[:-1]):
             copy_params_and_buffers(src_layer, layer)
@@ -166,7 +166,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
         self.discriminators = nn.ModuleDict(discriminators)
 
     def load_weights(self, source):
-        rg = self.requires_grad
+        rg = list(self.parameters())[0].requires_grad
         self.requires_grad_(False)
         for feat, src_feat in zip(self.feature_networks, source.feature_networks):
             copy_params_and_buffers(src_feat, feat)
