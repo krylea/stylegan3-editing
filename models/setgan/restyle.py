@@ -6,6 +6,7 @@ from setgan.utils import to_images
 
 class Restyle(nn.Module):
     def __init__(self, encoder, decoder, latent_avg, n_styles, device=torch.device("cuda")):
+        super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.latent_avg = latent_avg
