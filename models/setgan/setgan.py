@@ -31,8 +31,8 @@ class StyleAttention(nn.Module):
             self.style_concats = nn.ModuleList(style_concats)
             for layer in self.style_concats:
                 with torch.no_grad():
-                    torch.nn.init.normal_(layer.weight[:, :self.decoder.style_dim], std=0.2)
-                    torch.nn.init.eye_(layer.weight[:, self.decoder.style_dim:])
+                    torch.nn.init.normal_(layer.weight[:, :self.opts.style_dim], std=0.2)
+                    torch.nn.init.eye_(layer.weight[:, self.opts.style_dim:])
     
     def forward(self, z, s):
         transformed_codes = []
@@ -60,6 +60,7 @@ class SetGAN(nn.Module):
         # Load weights if needed
         self.load_weights()
 
+        self.opts.style_dim = self.decoder.style_dim
         self.style_attn = StyleAttention(opts)
 
         for parameter in self.decoder.mapping.parameters():
