@@ -116,7 +116,7 @@ class SetGAN(nn.Module):
                 # first iteration is with respect to the avg latent code
                 codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
         '''
-        bs, rs = images.size()[:2]
+        bs, rs = x.size()[:2]
         cs = s.size(1)
 
         codes = self.encoder(to_images(x))
