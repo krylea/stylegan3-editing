@@ -60,7 +60,7 @@ class SetGAN(nn.Module):
         # Load weights if needed
         self.load_weights()
 
-        self.opts.style_dim = self.decoder.style_dim
+        self.opts.style_dim = self.decoder.w_dim
         self.style_attn = StyleAttention(opts)
 
         for parameter in self.decoder.mapping.parameters():
