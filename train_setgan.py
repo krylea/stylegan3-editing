@@ -320,6 +320,7 @@ def main(**kwargs):
     c.G_kwargs.stylegan_weights = model_paths['styleganxl_%s_%d' % (opts.dataset_name, opts.resolution)]
     c.G_kwargs.train_encoder = opts.train_encoder
     c.G_kwargs.train_decoder = opts.train_decoder
+    c.G_kwargs.restyle_mode = opts.restyle_mode
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
