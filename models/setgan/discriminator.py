@@ -13,7 +13,7 @@ from models.styleganxl.feature_networks.constants import VITS
 
 from torch_utils.misc import copy_params_and_buffers
 
-from setgan.models.set import MultiSetTransformerEncoder, MultiSetTransformer
+from models.setgan.set import MultiSetTransformerEncoder, MultiSetTransformer
 from setgan.utils import to_images, to_imgset, to_set
 
 class SingleDisc(nn.Module):
@@ -58,7 +58,7 @@ class SingleDisc(nn.Module):
         self.main = nn.Sequential(*layers)
 
     def load_weights(self, source):
-        rg = self.requires_grad
+        rg = list(self.parameters())[0].requires_grad
         self.requires_grad_(False)
         for layer, src_layer in zip(self.main[:-1], source.main[:-1]):
             copy_params_and_buffers(src_layer, layer)
@@ -103,21 +103,25 @@ class MultiScaleD(nn.Module):
         })
 
         mini_discs = []
+        set_discs = []
         for i, (cin, res) in enumerate(zip(self.disc_in_channels, self.disc_in_res)):
             start_sz = res if not patch else 16
             disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//4, patch=patch)
             set_i = MultiSetTransformer(**set_kwargs)
-            mini_discs += [str(i), disc_i, set_i],
+            mini_discs += [str(i), disc_i],
+            set_discs += [str(i), set_i],
 
         self.mini_discs = nn.ModuleDict(mini_discs)
 
     def load_weights(self, source):
-        for disc, src_disc in zip(self.mini_discs, source.mini_discs):
+        for k in self.mini_discs.keys():
+            disc, src_disc = self.mini_discs[k], source.mini_discs[k]
             disc.load_weights(src_disc)
 
     def forward(self, r_features, x_features, rec=False):
         all_logits = []
-        for k, disc, set in self.mini_discs.items():
+        for k in self.mini_discs.keys():
+            disc, set = self.mini_discs[k], self.set_discs[k]
             x_flat = to_images(x_features[k])
             r_flat = to_images(r_features[k])
             x_enc = disc(x_flat, None).view(x_flat.size(0), -1)
@@ -163,12 +167,14 @@ class ProjectedSetDiscriminator(torch.nn.Module):
         self.discriminators = nn.ModuleDict(discriminators)
 
     def load_weights(self, source):
-        rg = self.requires_grad
+        rg = list(self.parameters())[0].requires_grad
         self.requires_grad_(False)
-        for feat, src_feat in zip(self.feature_networks, source.feature_networks):
+        for k in self.feature_networks.keys():
+            feat, disc = self.feature_networks[k], self.discriminators[k]
+            src_feat, src_disc = source.feature_networks[k], source.discriminators[k]
             copy_params_and_buffers(src_feat, feat)
-        for disc, src_disc in zip(self.discriminators, source.discriminators):
             disc.load_weights(src_disc)
+            
         self.requires_grad_(rg)
 
     def train(self, mode=True):

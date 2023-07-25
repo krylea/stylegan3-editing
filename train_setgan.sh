@@ -13,8 +13,8 @@ BATCH_PER_GPU=16
 RES=$1
 DATASET_NAME=$2
 EXP_NAME=$3
-ckpt=${3:-''}
-kimg=${4:-10000}
+ckpt=${4:-''}
+kimg=${5:-10000}
 
 if [ -z $SLURM_CPUS_PER_GPU ]
 then
@@ -52,7 +52,7 @@ argstring="$argstring \
 --candidate_size 1 4 \
 --exp_name $EXP_NAME"
 
-if [ -n $ckpt ]
+if [[ -n $ckpt ]]
 then
     argstring="$argstring --resume $ckpt"
 fi

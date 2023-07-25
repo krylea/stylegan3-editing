@@ -14,7 +14,9 @@ from setgan.utils import to_images, to_imgset, to_set
 
 class StyleAttention(nn.Module):
     def __init__(self, opts):
+        super().__init__()
         self.n_styles = opts.n_styles
+        self.opts = opts
         attns = []
         style_concats = []
         use_set_decoder = opts.use_set_decoder if hasattr(opts, 'use_set_decoder') else True
@@ -25,18 +27,18 @@ class StyleAttention(nn.Module):
             attns.append(attns_i)
         self.attns = nn.ModuleList(attns)
 
-        if not self.opts.disable_style_concat:
+        if not opts.disable_style_concat:
             self.style_concats = nn.ModuleList(style_concats)
             for layer in self.style_concats:
                 with torch.no_grad():
-                    torch.nn.init.normal_(layer.weight[:, :self.decoder.style_dim], std=0.2)
-                    torch.nn.init.eye_(layer.weight[:, self.decoder.style_dim:])
+                    torch.nn.init.normal_(layer.weight[:, :self.opts.style_dim], std=0.2)
+                    torch.nn.init.eye_(layer.weight[:, self.opts.style_dim:])
     
     def forward(self, z, s):
         transformed_codes = []
         for i in range(self.n_styles):
             codes_i = self.attns[i](s, z[:,:,i])
-            if not self.args.disable_style_concat:
+            if not self.opts.disable_style_concat:
                 codes_i = self.style_concats[i](torch.cat([codes_i, s], dim=-1))
             else:
                 codes_i = codes_i + s
@@ -58,6 +60,7 @@ class SetGAN(nn.Module):
         # Load weights if needed
         self.load_weights()
 
+        self.opts.style_dim = self.decoder.w_dim
         self.style_attn = StyleAttention(opts)
 
         for parameter in self.decoder.mapping.parameters():
@@ -113,7 +116,7 @@ class SetGAN(nn.Module):
                 # first iteration is with respect to the avg latent code
                 codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
         '''
-        bs, rs = images.size()[:2]
+        bs, rs = x.size()[:2]
         cs = s.size(1)
 
         codes = self.encoder(to_images(x))
