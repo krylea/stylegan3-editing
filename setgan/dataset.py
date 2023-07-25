@@ -131,6 +131,11 @@ class ImagesDataset(Dataset):
     def from_folder(cls, path, resolution):
         source_paths = sorted(make_dataset(path))
         return cls(source_paths, resolution)
+    
+    @classmethod
+    def from_folders(cls, path, resolution):
+        subfolders = [ f.path for f in os.scandir(path) if f.is_dir() ]
+        return [cls(sorted(make_dataset(subfolder)), resolution) for subfolder in subfolders]
 
     @classmethod
     def from_folder_by_category(cls, path, resolution):
