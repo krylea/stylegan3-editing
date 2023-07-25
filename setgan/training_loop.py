@@ -217,11 +217,13 @@ def training_loop(
         G_ema.reinit_stem()
 
     # Print network summary tables.
+    '''
     if rank == 0:
         z = torch.empty([batch_gpu, G.decoder.z_dim], device=device)
         c = torch.empty([batch_gpu, G.decoder.c_dim], device=device)
         img = misc.print_module_summary(G, [z, c])
         misc.print_module_summary(D, [img, c])
+    '''
 
     # Setup augmentation.
     if rank == 0:
@@ -271,6 +273,7 @@ def training_loop(
             phase.end_event = torch.cuda.Event(enable_timing=True)
 
     # Export sample images.
+    '''
     grid_size = None
     grid_z = None
     grid_c = None
@@ -284,6 +287,7 @@ def training_loop(
         images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for z, c in zip(grid_z, grid_c)]).numpy()
 
         save_image_grid(images, os.path.join(run_dir, 'fakes_init.png'), drange=[-1,1], grid_size=grid_size)
+    '''
 
     # Initialize logs.
     if rank == 0:
