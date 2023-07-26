@@ -35,7 +35,7 @@ model_paths = {
 	'pose_estimator': Path('pretrained_models/hopenet_robust_alpha1.pkl'),
 
     # encoders
-    'stylegan_xl_ffhq_256_encoder': Path('experiments/test-ffhq-1/checkpoint.pt'),
+    'stylegan_xl_ffhq_256_encoder': Path('experiments/test-ffhq-1/checkpoint.pt')
 }
 
 styleclip_directions = {
