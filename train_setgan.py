@@ -316,8 +316,8 @@ def main(**kwargs):
     c.G_kwargs.disable_style_concat = opts.disable_style_concat
     c.G_kwargs.use_temperature = opts.use_temperature
     c.G_kwargs.encoder_type = 'ResNetProgressiveBackboneEncoder' if opts.dataset_name == 'imagenet' else 'ProgressiveBackboneEncoder'
-    c.G_kwargs.checkpoint_path = model_paths['styleganxl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
-    c.G_kwargs.stylegan_weights = model_paths['styleganxl_%s_%d' % (opts.dataset_name, opts.resolution)]
+    c.G_kwargs.checkpoint_path = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
+    c.G_kwargs.stylegan_weights = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
     c.G_kwargs.train_encoder = opts.train_encoder
     c.G_kwargs.train_decoder = opts.train_decoder
     c.G_kwargs.restyle_mode = opts.restyle_mode
