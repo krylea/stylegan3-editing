@@ -15,7 +15,7 @@ model_paths = {
 	'mtcnn_onet': 'pretrained_models/mtcnn/onet.npy',
 
     # encoders and decoders
-    'styleganxl_face_256_encoder': 'experiments/test-ffhq-1/checkpoint.pt',
-    'styleganxl_face_256': '../stylegan-xl/pretrained_models/ffhq256.pkl',
+    'stylegan_xl_face_256_encoder': 'experiments/test-ffhq-1/checkpoint.pt',
+    'stylegan_xl_face_256': '../stylegan-xl/pretrained_models/ffhq256.pkl',
 
 }
