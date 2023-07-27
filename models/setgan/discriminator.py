@@ -91,9 +91,11 @@ class MultiScaleD(nn.Module):
         self.disc_in_res = resolutions[:num_discs]
         Disc = SingleDisc
 
+        inp_size = latent_size * output_res * output_res / 4
+
         set_kwargs.update({
-            'x_size': latent_size*output_res,
-            'y_size': latent_size*output_res,
+            'x_size': inp_size,
+            'y_size': inp_size,
             'latent_size': latent_size,
             'hidden_size': latent_size,
             'output_size': 1,
@@ -107,7 +109,7 @@ class MultiScaleD(nn.Module):
         set_discs = []
         for i, (cin, res) in enumerate(zip(self.disc_in_channels, self.disc_in_res)):
             start_sz = res if not patch else 16
-            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//output_res, patch=patch)
+            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//4, patch=patch)
             set_i = MultiSetTransformer(**set_kwargs)
             mini_discs += [str(i), disc_i],
             set_discs += [str(i), set_i],
