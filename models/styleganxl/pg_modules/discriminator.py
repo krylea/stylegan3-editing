@@ -148,7 +148,7 @@ class MultiScaleD(nn.Module):
         all_logits = []
         for k, disc in self.mini_discs.items():
             all_logits.append(disc(features[k], c).view(features[k].size(0), -1))
-
+            print(all_logits[-1].size())
         all_logits = torch.cat(all_logits, dim=1)
         return all_logits
 
