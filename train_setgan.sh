@@ -50,6 +50,7 @@ argstring="$argstring \
 --n_styles 18 \
 --reference_size 7 12 \
 --candidate_size 1 4 \
+--attn_layers 4 \
 --exp_name $EXP_NAME"
 
 if [[ -n $ckpt ]]
