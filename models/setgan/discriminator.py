@@ -211,8 +211,9 @@ class ProjectedSetDiscriminator(torch.nn.Module):
             # forward pass
             x_features = feat(x_n)
             r_features = feat(r_n)
-            x_features = to_imgset(x_features, initial_set=x)
-            r_features = to_imgset(r_features, initial_set=r)
+            for k in x_features.keys():
+                x_features[k] = to_imgset(x_features[k], initial_set=x)
+                r_features[k] = to_imgset(r_features[k], initial_set=r)
             logits += self.discriminators[bb_name](r_features, x_features)
 
         return logits
