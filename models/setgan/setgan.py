@@ -145,7 +145,7 @@ class SetGAN(nn.Module):
         self.decoder.synthesis.input.transform = identity_transform
         '''
         images = self.decode(decoder_inputs, resize=resize)
-        images = images.view(bs, cs, *images.size()[2:])
+        images = images.view(bs, cs, *images.size()[1:])
 
         # generate the unaligned image using the user-specified transforms
         '''
