@@ -144,7 +144,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
         diffaug=True,
         interp224=True,
         backbone_kwargs={},
-        backbone_res=[]
+        backbone_res=[],
         **kwargs
     ):
         super().__init__()
