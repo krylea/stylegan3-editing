@@ -38,11 +38,11 @@ class StyleAttention(nn.Module):
     def forward(self, z, s):
         transformed_codes = []
         for i in range(self.n_styles):
-            codes_i = self.attns[i](s, z[:,:,i])
+            codes_i = self.attns[i](s[:,:,i], z[:,:,i])
             if not self.opts.disable_style_concat:
-                codes_i = self.style_concats[i](torch.cat([codes_i, s], dim=-1))
+                codes_i = self.style_concats[i](torch.cat([codes_i, s[:,:,i]], dim=-1))
             else:
-                codes_i = codes_i + s
+                codes_i = codes_i + s[:,:,i]
             #codes_i = codes_i.view(-1, codes_i.size(-1))
             transformed_codes.append(codes_i)
         transformed_codes = torch.stack(transformed_codes, dim=2)
