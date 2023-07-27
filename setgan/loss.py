@@ -91,7 +91,8 @@ class ProjectedSetGANLoss(Loss):
             reference_set = to_imgset(ref_flat, initial_set=reference_set)
             imgs = to_imgset(imgs_flat, initial_set=imgs)
 
-        return self.D(reference_set, imgs)
+        #return self.D(reference_set, imgs)
+        return self.D(to_images(imgs), None)
 
     def accumulate_gradients(self, phase, reference_set, candidate_set, gen_s, gain, cur_nimg):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']
