@@ -91,10 +91,10 @@ class MultiScaleD(nn.Module):
         Disc = SingleDisc
 
         set_kwargs.update({
-            'x_size': latent_size//4,
-            'y_size': latent_size//4,
-            'latent_size': latent_size//4,
-            'hidden_size': latent_size//4,
+            'x_size': latent_size*4,
+            'y_size': latent_size*4,
+            'latent_size': latent_size*4,
+            'hidden_size': latent_size*4,
             'output_size': 1,
             'decoder_layers': 0,
             'weight_sharing': 'none',
