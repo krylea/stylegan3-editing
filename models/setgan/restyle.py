@@ -28,15 +28,17 @@ class Restyle(nn.Module):
             Z.append(z)
         
         if return_intermediates:
-            if return_latents:
-                return Y, Z
-            else:
-                return Y
+            #if return_latents:
+                #return Y, Z
+            #else:
+                #return Y
+            return Z
         else:
-            if return_latents:
-                return Y[-1], Z[-1]
-            else:
-                return Y[-1]
+            #if return_latents:
+                #return Y[-1], Z[-1]
+            #else:
+                #return Y[-1]
+            return Z[-1]
 
 
 class ReSetGAN(nn.Module):
