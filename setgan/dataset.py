@@ -148,10 +148,10 @@ class ImagesDataset(Dataset):
         return [cls(category_paths, resolution) for category_paths in all_category_paths.values()]
 
     @classmethod
-    def from_folder_by_attributes(cls, path, resolution):
-        file_name = "/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt"
+    def from_folder_by_attributes(cls, src_path, attr_path, resolution):
+        #file_name = "/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt"
 
-        with open(file_name, 'r') as infile:
+        with open(attr_path, 'r') as infile:
             lines = infile.readlines()
 
         # Remove the first line which is the total number of images
@@ -172,7 +172,7 @@ class ImagesDataset(Dataset):
             # image file name
             image_file = tokens.pop(0)
             
-            full_image_path = os.path.join(path, image_file)
+            full_image_path = os.path.join(src_path, image_file)
 
             # numpy array of integers
             attributes = np.array([int(attr) for attr in tokens])
@@ -189,10 +189,10 @@ class ImagesDataset(Dataset):
         return datasets_by_category
 
     @classmethod
-    def from_folder_by_attributes(cls, path, resolution):
-        file_name = "/scratch/ssd002/datasets/celeba/Anno/identity_CelebA.txt"
+    def from_folder_by_identities(cls, src_path, ident_path, resolution):
+        #file_name = "/scratch/ssd002/datasets/celeba/Anno/identity_CelebA.txt"
 
-        with open(file_name, 'r') as infile:
+        with open(ident_path, 'r') as infile:
             lines = infile.readlines()
 
         # Determine maximum identity value
@@ -214,7 +214,7 @@ class ImagesDataset(Dataset):
             image_file = tokens[0]
             
             # Full path to the image
-            full_image_path = os.path.join(path, image_file)
+            full_image_path = os.path.join(src_path, image_file)
 
             # Identity value starts from 1
             identity_index = int(tokens[1]) - 1
@@ -305,16 +305,18 @@ def load_vggface(resolution):
     return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
 
 def load_celeba_by_attributes(resolution):
-    return ImagesDataset.from_folder_by_attributes(dataset_paths['celeba'], resolution)
+    return ImagesDataset.from_folder_by_attributes(dataset_paths['celeba-src'], dataset_paths['celeba-attr'], resolution)
 
 def load_celeba_by_identities(resolution):
-    return ImagesDataset.from_folder_by_identities(dataset_paths['celeba'], resolution)
+    return ImagesDataset.from_folder_by_identities(dataset_paths['celeba-src'], dataset_paths['celeba-ident'], resolution)
 
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
         return load_vggface(resolution)
     elif dataset_name == 'imagenet':
         return load_imagenet(resolution)
+    elif dataset_name == 'celeba':
+        return load_celeba_by_attributes(resolution)
 
 
 
