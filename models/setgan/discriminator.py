@@ -91,7 +91,7 @@ class MultiScaleD(nn.Module):
         self.disc_in_res = resolutions[:num_discs]
         Disc = SingleDisc
 
-        inp_size = (latent_size * output_res * output_res) // 16
+        inp_size = latent_size#(latent_size * output_res * output_res) // 16
 
         set_kwargs.update({
             'x_size': inp_size,
@@ -109,7 +109,7 @@ class MultiScaleD(nn.Module):
         set_discs = []
         for i, (cin, res) in enumerate(zip(self.disc_in_channels, self.disc_in_res)):
             start_sz = res if not patch else 16
-            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//16, patch=patch)
+            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size, patch=patch)
             set_i = MultiSetTransformer(**set_kwargs)
             mini_discs += [str(i), disc_i],
             set_discs += [str(i), set_i],
@@ -130,9 +130,13 @@ class MultiScaleD(nn.Module):
             r_flat = to_images(r_features[k])
             x_enc = disc(x_flat, None)
             r_enc = disc(r_flat, None)
+            #x_enc = x_enc.view(x_flat.size(0), -1)
+            #r_enc = r_enc.view(r_flat.size(0), -1)
+            x_enc = x_enc.sum(dim=-1).sum(dim=-1)
+            r_enc = r_enc.sum(dim=-1).sum(dim=-1)
             #print(x_enc.size())
-            x_enc = to_set(x_enc.view(x_flat.size(0), -1), initial_set=x_features[k])
-            r_enc = to_set(r_enc.view(r_flat.size(0), -1), initial_set=r_features[k])
+            x_enc = to_set(x_enc, initial_set=x_features[k])
+            r_enc = to_set(r_enc, initial_set=r_features[k])
             logits = set(r_enc, x_enc)
             all_logits.append(logits)
 
