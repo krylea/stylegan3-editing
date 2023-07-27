@@ -3,7 +3,7 @@
 dataset_paths = {
 	'face': '../setgan2/datasets/vggface/train/',
     'imagenet': '/scratch/hdd001/datasets/imagenet/train',
-	'celeba-src': "/scratch/ssd002/datasets/celeba/Img/img-align-celeba",
+	'celeba-src': "/scratch/ssd002/datasets/celeba/Img/img_align_celeba",
 	'celeba-ident': "/scratch/ssd002/datasets/celeba/Anno/identity_CelebA.txt",
 	'celeba-attr': "/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt",
 }
