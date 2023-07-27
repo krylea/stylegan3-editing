@@ -331,6 +331,7 @@ def main(**kwargs):
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
         interp224=(c.training_set_kwargs.resolution < 224),
+        backbone_res={'deit_base_distilled_patch16_224':4, 'tf_efficientnet_lite0':5},
         backbone_kwargs=dnnlib.EasyDict(),
     )
     c.D_kwargs.backbone_kwargs.cout = 64

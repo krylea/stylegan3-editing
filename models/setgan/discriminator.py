@@ -73,6 +73,7 @@ class MultiScaleD(nn.Module):
         self,
         channels,
         resolutions,
+        output_res=4,
         latent_size=512,
         num_discs=4,
         proj_type=2,  # 0 = no projection, 1 = cross channel mixing, 2 = cross scale mixing
@@ -91,8 +92,8 @@ class MultiScaleD(nn.Module):
         Disc = SingleDisc
 
         set_kwargs.update({
-            'x_size': latent_size*4,
-            'y_size': latent_size*4,
+            'x_size': latent_size*output_res,
+            'y_size': latent_size*output_res,
             'latent_size': latent_size,
             'hidden_size': latent_size,
             'output_size': 1,
@@ -106,7 +107,7 @@ class MultiScaleD(nn.Module):
         set_discs = []
         for i, (cin, res) in enumerate(zip(self.disc_in_channels, self.disc_in_res)):
             start_sz = res if not patch else 16
-            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//4, patch=patch)
+            disc_i = Disc(nc=cin, start_sz=start_sz, end_sz=8, out_features=latent_size//output_res, patch=patch)
             set_i = MultiSetTransformer(**set_kwargs)
             mini_discs += [str(i), disc_i],
             set_discs += [str(i), set_i],
@@ -143,6 +144,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
         diffaug=True,
         interp224=True,
         backbone_kwargs={},
+        backbone_res=[]
         **kwargs
     ):
         super().__init__()
@@ -159,6 +161,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
             disc = MultiScaleD(
                 channels=feat.CHANNELS,
                 resolutions=feat.RESOLUTIONS,
+                output_res=backbone_res[bb_name],
                 **backbone_kwargs,
             )
 
