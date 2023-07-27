@@ -185,7 +185,7 @@ def training_loop(
     D = dnnlib.util.construct_class_by_name(**D_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
     with dnnlib.util.open_url(G_kwargs.stylegan_weights) as f:
         resume_data = legacy.load_network_pkl(f)
-    #D.load_weights(resume_data['D'])
+    D.load_weights(resume_data['D'])
 
     # Check for existing checkpoint
     ckpt_pkl = None

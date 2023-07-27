@@ -327,7 +327,7 @@ def main(**kwargs):
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
-        class_name='models.styleganxl.pg_modules.discriminator.ProjectedDiscriminator',
+        class_name='models.setgan.discriminator.ProjectedSetDiscriminator',
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
         interp224=(c.training_set_kwargs.resolution < 224),
