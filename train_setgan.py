@@ -244,6 +244,9 @@ def main(**kwargs):
     c.random_seed = opts.seed
     c.data_loader_kwargs.num_workers = opts.workers
 
+    c.reference_size = opts.reference_size
+    c.candidate_size = opts.candidate_size
+
     # Sanity checks.
     if c.batch_size % c.num_gpus != 0:
         raise click.ClickException('--batch must be a multiple of --gpus')
