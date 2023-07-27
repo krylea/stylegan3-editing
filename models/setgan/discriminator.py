@@ -112,6 +112,7 @@ class MultiScaleD(nn.Module):
             set_discs += [str(i), set_i],
 
         self.mini_discs = nn.ModuleDict(mini_discs)
+        self.set_discs = nn.ModuleDict(set_discs)
 
     def load_weights(self, source):
         for k in self.mini_discs.keys():
