@@ -26,6 +26,8 @@ from pg_modules.blocks import Interpolate
 import timm
 from pg_modules.projector import get_backbone_normstats
 
+from setgan.utils import to_images
+
 #----------------------------------------------------------------------------
 
 class Loss:
@@ -80,7 +82,7 @@ class ProjectedGANLoss(Loss):
                 f = torch.arange(-blur_size, blur_size + 1, device=img.device).div(blur_sigma).square().neg().exp2()
                 img = upfirdn2d.filter2d(img, f / f.sum())
 
-        return self.D(img, c)
+        return self.D(to_images(img), c)
 
     def accumulate_gradients(self, phase, real_img, real_c, gen_z, gen_c, gain, cur_nimg):
         assert phase in ['Gmain', 'Greg', 'Gboth', 'Dmain', 'Dreg', 'Dboth']
