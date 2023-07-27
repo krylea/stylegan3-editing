@@ -312,7 +312,8 @@ def load_celeba_by_identities(resolution):
 
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
-        return load_vggface(resolution)
+        return load_celeba_by_attributes(resolution)
+        #return load_vggface(resolution)
     elif dataset_name == 'imagenet':
         return load_imagenet(resolution)
     elif dataset_name == 'celeba':
