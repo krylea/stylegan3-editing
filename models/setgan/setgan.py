@@ -127,7 +127,7 @@ class SetGAN(nn.Module):
         #codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
 
         codes = codes.view(bs, rs, *codes.size()[1:])
-        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)))
+        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)), None)
         style_latents = style_latents.view(*s.size()[:-1], style_latents.size(-1))
 
         transformed_codes = self.style_attn(codes, style_latents)
