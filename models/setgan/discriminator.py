@@ -91,7 +91,7 @@ class MultiScaleD(nn.Module):
         self.disc_in_res = resolutions[:num_discs]
         Disc = SingleDisc
 
-        inp_size = latent_size * output_res * output_res / 4
+        inp_size = (latent_size * output_res * output_res) // 4
 
         set_kwargs.update({
             'x_size': inp_size,
