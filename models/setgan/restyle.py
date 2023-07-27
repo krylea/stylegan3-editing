@@ -9,11 +9,13 @@ class Restyle(nn.Module):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.latent_avg = latent_avg
         self.n_styles = n_styles
         self.device = device
+        self.latent_avg = latent_avg
+
         self.avg_image = self.decoder.synthesis(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
         self.avg_image = self.avg_image.to(self.device).float().detach()
+        self.latent_avg = self.latent_avg.to(self.device)
     
     def forward(self, x, iters=3, return_latents=False, return_intermediates=False):
         Y = [self.avg_image.unsqueeze(0).expand_as(x)]

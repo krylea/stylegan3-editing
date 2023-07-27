@@ -179,7 +179,7 @@ def training_loop(
         print('Constructing networks...')
     common_kwargs = dict(c_dim=0, img_resolution=training_set[0].resolution, img_channels=training_set[0].num_channels)
     #G = dnnlib.util.construct_class_by_name(**G_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
-    G = SetGAN(G_kwargs)
+    G = SetGAN(G_kwargs).to(device)
     G_ema = copy.deepcopy(G).eval()
     
     D = dnnlib.util.construct_class_by_name(**D_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
