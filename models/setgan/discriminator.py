@@ -130,7 +130,7 @@ class MultiScaleD(nn.Module):
             print(x_enc.size())
             x_enc = to_set(x_enc.view(x_flat.size(0), -1), initial_set=x_features[k])
             r_enc = to_set(r_enc.view(r_flat.size(0), -1), initial_set=r_features[k])
-            logits = torch.ones(r_features[k].size(0))#set(r_enc, x_enc)
+            logits = torch.ones(r_features[k].size(0),1)#set(r_enc, x_enc)
             all_logits.append(logits)
 
         all_logits = torch.cat(all_logits, dim=1)
