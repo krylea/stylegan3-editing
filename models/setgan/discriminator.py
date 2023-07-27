@@ -127,8 +127,8 @@ class MultiScaleD(nn.Module):
             r_flat = to_images(r_features[k])
             x_enc = disc(x_flat, None).view(x_flat.size(0), -1)
             r_enc = disc(r_flat, None).view(r_flat.size(0), -1)
-            x_enc = to_set(x_enc, initial_set=x_features)
-            r_enc = to_set(r_enc, initial_set=r_features)
+            x_enc = to_set(x_enc, initial_set=x_features[k])
+            r_enc = to_set(r_enc, initial_set=r_features[k])
             logits = set(r_enc, x_enc)
             all_logits.append(logits)
 
