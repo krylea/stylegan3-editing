@@ -303,7 +303,7 @@ class MultiSetModel(nn.Module):
         self.concat_inputs = concat_inputs
         output_latent_size = latent_size if not concat_inputs else latent_size*2
 
-        self.encoder = self._make_encoder(x_size, y_size, latent_size, hidden_size, num_heads=num_heads, activation_fct=activation_fct, **encoder_kwargs)
+        self.encoder = self._make_encoder(latent_size, latent_size, latent_size, hidden_size, num_heads=num_heads, activation_fct=activation_fct, **encoder_kwargs)
         self.decoder = self._make_decoder(output_latent_size, hidden_size, output_size, decoder_layers, activation_fct)
 
         self.pooling = pooling
