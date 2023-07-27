@@ -93,8 +93,8 @@ class MultiScaleD(nn.Module):
         set_kwargs.update({
             'x_size': latent_size*4,
             'y_size': latent_size*4,
-            'latent_size': latent_size*4,
-            'hidden_size': latent_size*4,
+            'latent_size': latent_size,
+            'hidden_size': latent_size,
             'output_size': 1,
             'decoder_layers': 0,
             'weight_sharing': 'none',
