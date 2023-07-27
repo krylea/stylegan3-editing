@@ -40,7 +40,8 @@ class StyleAttention(nn.Module):
         for i in range(self.n_styles):
             codes_i = self.attns[i](s[:,:,i], z[:,:,i])
             if not self.opts.disable_style_concat:
-                codes_i = self.style_concats[i](torch.cat([codes_i, s[:,:,i]], dim=-1))
+                codes_i = torch.cat([codes_i, s[:,:,i]], dim=-1)
+                codes_i = to_set(self.style_concats[i](codes_i.view(-1, codes_i.size(-1))), initial_set=codes_i)
             else:
                 codes_i = codes_i + s[:,:,i]
             #codes_i = codes_i.view(-1, codes_i.size(-1))
