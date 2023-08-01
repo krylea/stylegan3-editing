@@ -105,7 +105,7 @@ class SetGAN(nn.Module):
 
         
     def forward(self, x, s, latent=None, resize=True, input_code=False, landmarks_transform=None,
-                return_latents=False, return_aligned_and_unaligned=False, update_emas=False):
+                return_latents=False, return_aligned_and_unaligned=False, update_emas=False, **kwargs):
 
         images, unaligned_images = None, None
 
