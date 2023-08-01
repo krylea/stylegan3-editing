@@ -163,7 +163,7 @@ def init_setgan_args(opts, c):
     c.G_kwargs.train_encoder = opts.train_encoder
     c.G_kwargs.train_decoder = opts.train_decoder
     c.G_kwargs.restyle_mode = opts.restyle_mode
-    c.G_kwargs.iters = opts.restyle_iters
+    c.G_kwargs.restyle_iters = opts.restyle_iters
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
