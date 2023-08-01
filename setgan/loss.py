@@ -77,7 +77,7 @@ class ProjectedSetGANLoss(Loss):
         return img, ws
     '''
     def run_G(self, reference_set, s, update_emas=False):
-        return self.G(reference_set, s, return_latents=True)
+        return self.G(reference_set, s, return_latents=True, update_emas=update_emas)
 
     def run_D(self, reference_set, imgs, blur_sigma=0, update_emas=False):
         blur_size = np.floor(blur_sigma * 3)

@@ -105,7 +105,7 @@ class SetGAN(nn.Module):
 
         
     def forward(self, x, s, latent=None, resize=True, input_code=False, landmarks_transform=None,
-                return_latents=False, return_aligned_and_unaligned=False):
+                return_latents=False, return_aligned_and_unaligned=False, update_emas=False):
 
         images, unaligned_images = None, None
 
@@ -129,7 +129,7 @@ class SetGAN(nn.Module):
         codes = codes - self.latent_avg.repeat(codes.shape[0], 1, 1)
 
         codes = codes.view(bs, rs, *codes.size()[1:])
-        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)), None)
+        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
         style_latents = style_latents.view(*s.size()[:-1], *style_latents.size()[-2:])
 
         transformed_codes = self.style_attn(codes, style_latents)
@@ -145,7 +145,7 @@ class SetGAN(nn.Module):
             identity_transform = torch.from_numpy(identity_transform).cuda().float()
         self.decoder.synthesis.input.transform = identity_transform
         '''
-        images = self.decode(decoder_inputs, resize=resize)
+        images = self.decode(decoder_inputs, resize=resize, update_emas=False, **kwargs)
         images = images.view(bs, cs, *images.size()[1:])
 
         # generate the unaligned image using the user-specified transforms
