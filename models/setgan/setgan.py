@@ -69,7 +69,7 @@ class SetGAN(nn.Module):
             parameter.requires_grad_(False)
 
         if self.opts.restyle_mode == 'encoder':
-            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.opts.n_styles)
+            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.opts.n_styles, iters=self.opts.restyle_iters)
 
 
     def set_encoder(self):
@@ -102,6 +102,7 @@ class SetGAN(nn.Module):
         if resize:
             images = self.face_pool(images)
         return images
+
         
     def forward(self, x, s, latent=None, resize=True, input_code=False, landmarks_transform=None,
                 return_latents=False, return_aligned_and_unaligned=False):

@@ -51,7 +51,10 @@ argstring="$argstring \
 --reference_size 7 12 \
 --candidate_size 1 4 \
 --attn_layers 4 \
---exp_name $EXP_NAME"
+--exp_name $EXP_NAME \
+--restyle_mode encoder \
+--restyle_iters 3 \
+--use_setgan"
 
 if [[ -n $ckpt ]]
 then

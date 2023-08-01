@@ -144,6 +144,110 @@ def parse_comma_separated_list(s):
 
 #----------------------------------------------------------------------------
 
+def init_setgan_args(opts, c):
+    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
+
+    # Generator
+    c.G_kwargs = dnnlib.EasyDict()
+    c.G_kwargs.n_styles = opts.n_styles
+    c.G_kwargs.latent = opts.latent
+    c.G_kwargs.input_nc = opts.input_nc
+    c.G_kwargs.n_heads = opts.n_heads
+    c.G_kwargs.attn_layers = opts.attn_layers
+    c.G_kwargs.use_set_decoder = opts.use_set_decoder
+    c.G_kwargs.disable_style_concat = opts.disable_style_concat
+    c.G_kwargs.use_temperature = opts.use_temperature
+    c.G_kwargs.encoder_type = 'ResNetProgressiveBackboneEncoder' if opts.dataset_name == 'imagenet' else 'ProgressiveBackboneEncoder'
+    c.G_kwargs.checkpoint_path = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
+    c.G_kwargs.stylegan_weights = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
+    c.G_kwargs.train_encoder = opts.train_encoder
+    c.G_kwargs.train_decoder = opts.train_decoder
+    c.G_kwargs.restyle_mode = opts.restyle_mode
+    c.G_kwargs.iters = opts.restyle_iters
+
+    # Discriminator
+    c.D_kwargs = dnnlib.EasyDict(
+        class_name='models.setgan.discriminator.ProjectedSetDiscriminator',
+        backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
+        diffaug=True,
+        interp224=(c.training_set_kwargs.resolution < 224),
+        backbone_res={'deit_base_distilled_patch16_224':4, 'tf_efficientnet_lite0':5},
+        backbone_kwargs=dnnlib.EasyDict(),
+    )
+    c.D_kwargs.backbone_kwargs.cout = 64
+    c.D_kwargs.backbone_kwargs.expand = True
+    c.D_kwargs.backbone_kwargs.proj_type = 2 
+    c.D_kwargs.backbone_kwargs.num_discs = 4
+    c.D_kwargs.backbone_kwargs.cond = opts.cond
+
+    # Loss
+    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedSetGANLoss')
+    c.loss_kwargs.blur_init_sigma = 2  # Blur the images seen by the discriminator.
+    c.loss_kwargs.blur_fade_kimg = 300
+    c.loss_kwargs.pl_weight = 2.0
+    c.loss_kwargs.pl_no_weight_grad = True
+    c.loss_kwargs.style_mixing_prob = 0.0
+    c.loss_kwargs.cls_weight = 0.0  # use classifier guidance only for superresolution training (i.e., with pretrained stem)
+    c.loss_kwargs.cls_model = 'deit_small_distilled_patch16_224'
+    c.loss_kwargs.train_head_only = False
+
+def init_sgxl_args(opts, c):
+    c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
+    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
+    if opts.cond and not c.training_set_kwargs.use_labels:
+        raise click.ClickException('--cond=True requires labels specified in dataset.json')
+    c.training_set_kwargs.use_labels = opts.cond
+    c.training_set_kwargs.xflip = opts.mirror
+
+    if opts.dataset_name is None:
+        opts.dataset_name = dataset_name
+
+    c.G_kwargs.channel_base = opts.cbase
+    c.G_kwargs.channel_max = opts.cmax
+    c.G_kwargs.class_name = 'training.networks_stylegan3_resetting.Generator'
+    c.G_kwargs.magnitude_ema_beta = 0.5 ** (c.batch_size / (20 * 1e3))
+    c.G_kwargs.channel_base *= 2  # increase for StyleGAN-XL
+    c.G_kwargs.channel_max *= 2   # increase for StyleGAN-XL
+    c.G_kwargs.conv_kernel = 1 if opts.cfg == 'stylegan3-r' else 3
+    c.G_kwargs.use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
+
+    if opts.cfg == 'stylegan3-r':
+        c.G_kwargs.channel_base *= 2
+        c.G_kwargs.channel_max *= 2
+
+    c.D_kwargs = dnnlib.EasyDict(
+        class_name='models.styleganxl.pg_modules.discriminator.ProjectedDiscriminator',
+        backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
+        diffaug=True,
+        interp224=(c.training_set_kwargs.resolution < 224),
+        backbone_kwargs=dnnlib.EasyDict(),
+    )
+    c.D_kwargs.backbone_kwargs.cout = 64
+    c.D_kwargs.backbone_kwargs.expand = True
+    c.D_kwargs.backbone_kwargs.proj_type = 2 
+    c.D_kwargs.backbone_kwargs.num_discs = 4
+    c.D_kwargs.backbone_kwargs.cond = opts.cond
+
+    # Loss
+    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedSetGANLoss')
+    c.loss_kwargs.blur_init_sigma = 2  # Blur the images seen by the discriminator.
+    c.loss_kwargs.blur_fade_kimg = 300
+    c.loss_kwargs.pl_weight = 2.0
+    c.loss_kwargs.pl_no_weight_grad = True
+    c.loss_kwargs.style_mixing_prob = 0.0
+    c.loss_kwargs.cls_weight = 0.0  # use classifier guidance only for superresolution training (i.e., with pretrained stem)
+    c.loss_kwargs.cls_model = 'deit_small_distilled_patch16_224'
+    c.loss_kwargs.train_head_only = False
+
+
+
+
+
+
+
+
+#----------------------------------------------------------------------------
+
 @click.command()
 
 # Required.
@@ -209,6 +313,8 @@ def parse_comma_separated_list(s):
 @click.option('--reference_size', type=int, nargs=2, default=(7,12))
 @click.option('--candidate_size', type=int, nargs=2, default=(1,4))
 @click.option('--restyle_mode', type=click.Choice(['none', 'encoder', 'resetgan', 'resetgan2']), default='encoder')
+@click.option('--restyle_iters', type=int, default=3)
+@click.option('--use_setgan', is_flag=True)
 
 def main(**kwargs):
     # Initialize config.
@@ -220,7 +326,7 @@ def main(**kwargs):
 
     # Training set.
     #c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
-    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
+    
     #if opts.cond and not c.training_set_kwargs.use_labels:
     #    raise click.ClickException('--cond=True requires labels specified in dataset.json')
     #c.training_set_kwargs.use_labels = opts.cond
@@ -233,8 +339,7 @@ def main(**kwargs):
     c.num_gpus = opts.gpus
     c.batch_size = opts.batch
     c.batch_gpu = opts.batch_gpu or opts.batch // opts.gpus
-    #c.G_kwargs.channel_base = opts.cbase
-    #c.G_kwargs.channel_max = opts.cmax
+
     c.G_opt_kwargs.lr = (0.002 if opts.cfg == 'stylegan2' else 0.0025) if opts.glr is None else opts.glr
     c.D_opt_kwargs.lr = opts.dlr
     c.metrics = opts.metrics
@@ -281,7 +386,7 @@ def main(**kwargs):
         #if opts.cfg == 'stylegan3-r':
         #    c.G_kwargs.channel_base *= 2
         #    c.G_kwargs.channel_max *= 2
-
+        
     # Resume.
     if opts.resume is not None:
         c.resume_pkl = opts.resume
@@ -308,48 +413,11 @@ def main(**kwargs):
     ########## StyleGAN-XL ###########
     ##################################
 
-    # Generator
-    c.G_kwargs = dnnlib.EasyDict()
-    c.G_kwargs.n_styles = opts.n_styles
-    c.G_kwargs.latent = opts.latent
-    c.G_kwargs.input_nc = opts.input_nc
-    c.G_kwargs.n_heads = opts.n_heads
-    c.G_kwargs.attn_layers = opts.attn_layers
-    c.G_kwargs.use_set_decoder = opts.use_set_decoder
-    c.G_kwargs.disable_style_concat = opts.disable_style_concat
-    c.G_kwargs.use_temperature = opts.use_temperature
-    c.G_kwargs.encoder_type = 'ResNetProgressiveBackboneEncoder' if opts.dataset_name == 'imagenet' else 'ProgressiveBackboneEncoder'
-    c.G_kwargs.checkpoint_path = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
-    c.G_kwargs.stylegan_weights = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
-    c.G_kwargs.train_encoder = opts.train_encoder
-    c.G_kwargs.train_decoder = opts.train_decoder
-    c.G_kwargs.restyle_mode = opts.restyle_mode
+    if opts.use_setgan:
+        init_setgan_args(opts, c)
+    else:
+        init_sgxl_args(opts, c)
 
-    # Discriminator
-    c.D_kwargs = dnnlib.EasyDict(
-        class_name='models.setgan.discriminator.ProjectedSetDiscriminator',
-        backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
-        diffaug=True,
-        interp224=(c.training_set_kwargs.resolution < 224),
-        backbone_res={'deit_base_distilled_patch16_224':4, 'tf_efficientnet_lite0':5},
-        backbone_kwargs=dnnlib.EasyDict(),
-    )
-    c.D_kwargs.backbone_kwargs.cout = 64
-    c.D_kwargs.backbone_kwargs.expand = True
-    c.D_kwargs.backbone_kwargs.proj_type = 2 
-    c.D_kwargs.backbone_kwargs.num_discs = 4
-    c.D_kwargs.backbone_kwargs.cond = opts.cond
-
-    # Loss
-    c.loss_kwargs = dnnlib.EasyDict(class_name='setgan.loss.ProjectedSetGANLoss')
-    c.loss_kwargs.blur_init_sigma = 2  # Blur the images seen by the discriminator.
-    c.loss_kwargs.blur_fade_kimg = 300
-    c.loss_kwargs.pl_weight = 2.0
-    c.loss_kwargs.pl_no_weight_grad = True
-    c.loss_kwargs.style_mixing_prob = 0.0
-    c.loss_kwargs.cls_weight = 0.0  # use classifier guidance only for superresolution training (i.e., with pretrained stem)
-    c.loss_kwargs.cls_model = 'deit_small_distilled_patch16_224'
-    c.loss_kwargs.train_head_only = False
 
     if opts.superres:
         assert opts.path_stem is not None, "When training superres head, provide path to stem"
