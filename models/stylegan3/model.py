@@ -37,7 +37,7 @@ class SG3Generator(torch.nn.Module):
                 channel_max=512,
                 magnitude_ema_beta=0.9988915792636801,
                 mapping_kwargs={'num_layers': 2}
-            ).cuda()
+            )
         else:
             self.decoder = Generator(z_dim=512,
                                      c_dim=0,
@@ -51,7 +51,7 @@ class SG3Generator(torch.nn.Module):
                                      magnitude_ema_beta=0.9988915792636801,
                                      output_scale=0.25,
                                      use_radial_filters=True
-                                     ).cuda()
+                                     )
         if checkpoint_path is not None:
             self._load_checkpoint(checkpoint_path)
         print('Done!')
