@@ -329,7 +329,7 @@ def training_loop(
     if hasattr(loss, 'pl_mean'):
         loss.pl_mean.copy_(__PL_MEAN__)
     while True:
-
+        torch.cuda.empty_cache()
         with torch.autograd.profiler.record_function('data_fetch'):
             reference_samples = torch.randint(*reference_size, (1,))
             candidate_samples = torch.randint(*candidate_size, (1,))
