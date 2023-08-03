@@ -168,7 +168,7 @@ class SetGAN(nn.Module):
 
     def _load_latent_avg(self, ckpt, repeat=None):
         if 'latent_avg' in ckpt:
-            #self.latent_avg = ckpt['latent_avg'].to("cuda")
+            self.latent_avg = ckpt['latent_avg']
             if repeat is not None:
                 self.latent_avg = self.latent_avg.repeat(repeat, 1)
         else:
