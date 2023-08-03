@@ -86,14 +86,14 @@ class SetGAN(nn.Module):
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
-            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder
+            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
             self.decoder.load_state_dict(self._get_keys(ckpt, 'decoder', remove=["synthesis.input.transform"]), strict=False)
             self._load_latent_avg(ckpt)
         else:
             encoder_ckpt = self._get_encoder_checkpoint()
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
-            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder
-            self.latent_avg = self.decoder.mapping.w_avg
+            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
+            self.latent_avg = self.decoder.mapping.w_avg.cpu()
 
     def decode(self, x, transform=None, resize=True, **kwargs):
         if transform is not None:
@@ -168,7 +168,7 @@ class SetGAN(nn.Module):
 
     def _load_latent_avg(self, ckpt, repeat=None):
         if 'latent_avg' in ckpt:
-            self.latent_avg = ckpt['latent_avg']
+            self.latent_avg = ckpt['latent_avg'].cpu()
             if repeat is not None:
                 self.latent_avg = self.latent_avg.repeat(repeat, 1)
         else:
