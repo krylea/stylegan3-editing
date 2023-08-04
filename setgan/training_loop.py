@@ -334,6 +334,10 @@ def training_loop(
             reference_samples = torch.randint(*reference_size, (1,))
             candidate_samples = torch.randint(*candidate_size, (1,))
             reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+
+            # save reference set
+            save_image_grid(reference_set, os.path.join(run_dir, 'reference.png'), drange=[0,255], grid_size=grid_size)
+            
             #phase_real_img, phase_real_c = next(training_set_iterator)
             phase_reference_set = (reference_set.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
             phase_candidate_set = (candidate_set.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
