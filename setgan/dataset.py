@@ -487,8 +487,18 @@ class ImageMultiSetGenerator():
         
         return sets
     
-    def __call__(self, batch_size, set_sizes, contrastive=False, rng=None, class_id=None):
-        dataset_inds = torch.randint(self.n, (batch_size,), generator=rng) if class_id is None else torch.ones(batch_size, dtype=torch.int)*class_id
+    def __call__(self, batch_size, set_sizes, contrastive=False, rng=None, class_ids=None):
+        dataset_inds = None
+        if isinstance(class_ids, torch.Tensor):
+            dataset_inds = class_ids
+        elif isinstance(class_ids, int):
+            dataset_inds = torch.randint(self.n, (batch_size,), generator=rng)
+            for i in range(len(dataset_inds)):
+                dataset_inds[i] = class_ids
+        else:
+            dataset_inds = torch.randint(self.n, (batch_size,), generator=rng)
+
+        # dataset_inds = torch.randint(self.n, (batch_size,), generator=rng) if class_id is None else torch.ones(batch_size, dtype=torch.int)*class_id
         sets = []
         for i in range(batch_size):
             if rng is None:
