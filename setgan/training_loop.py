@@ -280,12 +280,17 @@ def training_loop(
     if rank == 0:
         print('Exporting sample images...')
         grid_size, images, labels = setup_snapshot_image_grid(training_set=training_set)
+        # generate a few reference sets
+        reference_set = []
+        
         save_image_grid(images, os.path.join(run_dir, 'reals.png'), drange=[0,255], grid_size=grid_size)
 
-        grid_z = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
-        grid_c = torch.from_numpy(labels).to(device).split(batch_gpu)
+        # generate s
+        grid_s = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
+        # pass s and ref set
         images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for z, c in zip(grid_z, grid_c)]).numpy()
 
+        # ref set + gen set
         save_image_grid(images, os.path.join(run_dir, 'fakes_init.png'), drange=[-1,1], grid_size=grid_size)
     '''
 
@@ -336,7 +341,7 @@ def training_loop(
             reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
 
             # save reference set
-            save_image_grid(reference_set, os.path.join(run_dir, 'reference.png'), drange=[0,255], grid_size=grid_size)
+            #save_image_grid(reference_set, os.path.join(run_dir, 'reference.png'), drange=[0,255], grid_size=grid_size)
             
             #phase_real_img, phase_real_c = next(training_set_iterator)
             phase_reference_set = (reference_set.to(device).to(torch.float32) / 127.5 - 1).split(batch_gpu)
