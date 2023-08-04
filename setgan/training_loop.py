@@ -78,23 +78,40 @@ def setup_snapshot_image_grid(training_set, random_seed=0, gw=None, gh=None):
 
 #----------------------------------------------------------------------------
 
-def save_image_grid(img, fname, drange, grid_size):
+def save_image_grid(reference_img, fname, drange, grid_size, generated_img=None):
     lo, hi = drange
-    img = np.asarray(img, dtype=np.float32)
-    img = (img - lo) * (255 / (hi - lo))
-    img = np.rint(img).clip(0, 255).astype(np.uint8)
+
+    # handle reference_img
+    reference_img = np.asarray(reference_img, dtype=np.float32)
+    reference_img = (reference_img- lo) * (255 / (hi - lo))
+    reference_img = np.rint(reference_img).clip(0, 255).astype(np.uint8)
 
     gw, gh = grid_size
-    _N, C, H, W = img.shape
-    img = img.reshape([gh, gw, C, H, W])
-    img = img.transpose(0, 3, 1, 4, 2)
-    img = img.reshape([gh * H, gw * W, C])
+    _N, C, H, W = reference_img.shape
+    reference_img = reference_img.reshape([gh, gw, C, H, W])
+    reference_img = reference_img.transpose(0, 3, 1, 4, 2)
+    reference_img = reference_img.reshape([gh * H, gw * W, C])
+
+    # handle genearted_img
+    generated_img = np.asarray(generated_img, dtype=np.float32)
+    generated_img = (generated_img - lo) * (255 / (hi - lo))
+    generated_img = np.rint(generated_img).clip(0, 255).astype(np.uint8)
+
+    gw, gh = grid_size
+    _N, C, H, W = generated_img.shape
+    generated_img = generated_img.reshape([gh, gw, C, H, W])
+    generated_img = generated_img.transpose(0, 3, 1, 4, 2)
+    generated_img = generated_img.reshape([gh * H, gw * W, C])
+
+
+    # Concatenate reference_img and generated_img along width axis
+    final_image_grid = np.concatenate((reference_img, generated_img), axis=1)
 
     assert C in [1, 3]
     if C == 1:
-        PIL.Image.fromarray(img[:, :, 0], 'L').save(fname)
+        PIL.Image.fromarray(final_image_grid[:, :, 0], 'L').save(fname)
     if C == 3:
-        PIL.Image.fromarray(img, 'RGB').save(fname)
+        PIL.Image.fromarray(final_image_grid, 'RGB').save(fname)
 
 #----------------------------------------------------------------------------
 
@@ -273,26 +290,36 @@ def training_loop(
             phase.end_event = torch.cuda.Event(enable_timing=True)
 
     # Export sample images.
-    '''
+
     grid_size = None
-    grid_z = None
     grid_c = None
     if rank == 0:
         print('Exporting sample images...')
         grid_size, images, labels = setup_snapshot_image_grid(training_set=training_set)
-        # generate a few reference sets
-        reference_set = []
-        
-        save_image_grid(images, os.path.join(run_dir, 'reals.png'), drange=[0,255], grid_size=grid_size)
+        # generate a few reference sets (assume set size of 4 for now)
+        id_tensor = torch.arange(0, 1000)
+        reference_set = training_set_generator(batch_size, set_sizes=(4), class_ids=id_tensor)
+
+        for i in range(reference_set):
+            images = reference_set[i]
+            name = 'ref' + str(i)
+            save_image_grid(images, os.path.join(run_dir, name), drange=[0,255], grid_size=grid_size)
 
         # generate s
         grid_s = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
         # pass s and ref set
-        images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for z, c in zip(grid_z, grid_c)]).numpy()
+        generated_images = []
+        for i in range(1000):
+            generated_imgs = generator(grid_s, reference_set[i], grid_c) # generator generates a set of images?
+            generated_images.append(generated_imgs)
+        # generated_images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for s, c in zip(grid_s, grid_c)]).numpy()
 
-        # ref set + gen set
-        save_image_grid(images, os.path.join(run_dir, 'fakes_init.png'), drange=[-1,1], grid_size=grid_size)
-    '''
+        # ref set + gen set (left side ref, right side gen) (1000 classes)
+        for i in range(1000):
+            name = "fakes_init" + str(i)
+            save_image_grid(reference_set[i], os.path.join(run_dir, name), drange=[-1,1], 
+                            grid_size=grid_size, generated_img = generated_images[i])
+
 
     # Initialize logs.
     if rank == 0:
