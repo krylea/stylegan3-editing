@@ -435,34 +435,45 @@ class Split():
 
 
 class ConditionalMetrics():
-    def __init__(self, class_datasets):
+    def __init__(self, class_datasets, dataset_name, root_dir='./datasets'):
+        self.dataset_name = dataset_name
         self.class_datasets = class_datasets
         self.num_classes = len(class_datasets)
         self.splits = {}
         self.metrics = {}
 
-    def add_split(self, name, reference_size, evaluation_size, generation_size, seed=None):
-        rng = torch.Generator()
-        if seed is not None:
-            rng.manual_seed(seed)
-
-        reference_sets = []
-        evaluation_sets = []
-        for cl in self.class_datasets:
-            N = len(cl)
-            p = torch.randperm(N, generator=rng)
-            assert reference_size + evaluation_size <= N
-            if evaluation_size == -1: 
-                evaluation_size = N - reference_size
-            reference_sets.append(Subset(cl, p[:reference_size]))
-            evaluation_sets.append(Subset(cl, p[reference_size:reference_size+evaluation_size]))
+        self.cache_dir = os.path.join(root_dir, self.dataset_name)
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
         
-        self.splits[name] = Split(
-            reference_sets      = reference_sets,
-            evaluation_sets     = evaluation_sets,
-            generation_size     = generation_size,
-            seed                = seed
-        )
+    def add_split(self, name, reference_size, evaluation_size, generation_size, seed=None):
+        cache_file = os.path.join(self.cache_dir, "%s.pkl" % name)
+        if os.path.exists(cache_file):
+            split = Split.load(cache_file)
+        else:
+            rng = torch.Generator()
+            if seed is not None:
+                rng.manual_seed(seed)
+
+            reference_sets = []
+            evaluation_sets = []
+            for cl in self.class_datasets:
+                N = len(cl)
+                p = torch.randperm(N, generator=rng)
+                assert reference_size + evaluation_size <= N
+                if evaluation_size == -1: 
+                    evaluation_size = N - reference_size
+                reference_sets.append(Subset(cl, p[:reference_size]))
+                evaluation_sets.append(Subset(cl, p[reference_size:reference_size+evaluation_size]))
+            
+            split = Split(
+                reference_sets      = reference_sets,
+                evaluation_sets     = evaluation_sets,
+                generation_size     = generation_size,
+                seed                = seed
+            )
+            split.save(cache_file)
+        self.splits[name] = split
 
     def add_metric(self, metric):
         assert is_valid_metric(metric)
