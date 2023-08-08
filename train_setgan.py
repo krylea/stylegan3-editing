@@ -90,9 +90,9 @@ def launch_training(c, exp_name, outdir, dry_run):
     print(f'Number of GPUs:      {c.num_gpus}')
     print(f'Batch size:          {c.batch_size} images')
     print(f'Training duration:   {c.total_kimg} kimg')
-    print(f'Dataset path:        {dataset_paths[c.training_set_kwargs.dataset_name]}')
+    print(f'Dataset path:        {dataset_paths[c.dataset_kwargs.dataset_name]}')
     #print(f'Dataset size:        {c.training_set_kwargs.max_size} images')
-    print(f'Dataset resolution:  {c.training_set_kwargs.resolution}')
+    print(f'Dataset resolution:  {c.dataset_kwargs.resolution}')
     #print(f'Dataset labels:      {c.training_set_kwargs.use_labels}')
     #print(f'Dataset x-flips:     {c.training_set_kwargs.xflip}')
     print()
@@ -145,7 +145,7 @@ def parse_comma_separated_list(s):
 #----------------------------------------------------------------------------
 
 def init_setgan_args(opts, c):
-    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
+    c.dataset_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
 
     # Generator
     c.G_kwargs = dnnlib.EasyDict()
@@ -170,7 +170,7 @@ def init_setgan_args(opts, c):
         class_name='models.setgan.discriminator.ProjectedSetDiscriminator',
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
-        interp224=(c.training_set_kwargs.resolution < 224),
+        interp224=(c.dataset_kwargs.resolution < 224),
         backbone_res={'deit_base_distilled_patch16_224':4, 'tf_efficientnet_lite0':5},
         backbone_kwargs=dnnlib.EasyDict(),
     )
@@ -192,12 +192,12 @@ def init_setgan_args(opts, c):
     c.loss_kwargs.train_head_only = False
 
 def init_sgxl_args(opts, c):
-    c.training_set_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
-    c.training_set_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
-    if opts.cond and not c.training_set_kwargs.use_labels:
+    c.dataset_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
+    c.dataset_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
+    if opts.cond and not c.dataset_kwargs.use_labels:
         raise click.ClickException('--cond=True requires labels specified in dataset.json')
-    c.training_set_kwargs.use_labels = opts.cond
-    c.training_set_kwargs.xflip = opts.mirror
+    c.dataset_kwargs.use_labels = opts.cond
+    c.dataset_kwargs.xflip = opts.mirror
 
     if opts.dataset_name is None:
         opts.dataset_name = dataset_name
@@ -219,7 +219,7 @@ def init_sgxl_args(opts, c):
         class_name='models.styleganxl.pg_modules.discriminator.ProjectedDiscriminator',
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
-        interp224=(c.training_set_kwargs.resolution < 224),
+        interp224=(c.dataset_kwargs.resolution < 224),
         backbone_kwargs=dnnlib.EasyDict(),
     )
     c.D_kwargs.backbone_kwargs.cout = 64
