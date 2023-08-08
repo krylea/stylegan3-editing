@@ -312,7 +312,7 @@ class Split():
 
         for cl in range(self.num_classes):
             reference_set = self.reference_sets[cl]
-            reference_set = torch.stack([x for x in reference_set], dim=0).to(opts.device)
+            reference_set = torch.stack([torch.tensor(x) for x in reference_set], dim=0).to(opts.device)
 
             self._class_feature_stats_for_generator(
                 stats           = all_stats[cl],
