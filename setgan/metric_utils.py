@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 # PG additions
 import contextlib
-from pg_modules.projector import F_RandomProj
+from models.styleganxl.pg_modules.projector import F_RandomProj
 from pathlib import Path
 import dill
 from models.styleganxl.torch_utils import gen_utils
@@ -21,6 +21,100 @@ import setgan.safe_dataset
 from torch.utils.data import Subset
 
 from setgan.metrics import _metric_dict, is_valid_metric
+
+import json
+
+#----------------------------------------------------------------------------
+
+class ProgressMonitor:
+    def __init__(self, tag=None, num_items=None, flush_interval=1000, verbose=False, progress_fn=None, pfn_lo=0, pfn_hi=1000, pfn_total=1000):
+        self.tag = tag
+        self.num_items = num_items
+        self.verbose = verbose
+        self.flush_interval = flush_interval
+        self.progress_fn = progress_fn
+        self.pfn_lo = pfn_lo
+        self.pfn_hi = pfn_hi
+        self.pfn_total = pfn_total
+        self.start_time = time.time()
+        self.batch_time = self.start_time
+        self.batch_items = 0
+        if self.progress_fn is not None:
+            self.progress_fn(self.pfn_lo, self.pfn_total)
+
+    def update(self, cur_items):
+        assert (self.num_items is None) or (cur_items <= self.num_items)
+        if (cur_items < self.batch_items + self.flush_interval) and (self.num_items is None or cur_items < self.num_items):
+            return
+        cur_time = time.time()
+        total_time = cur_time - self.start_time
+        time_per_item = (cur_time - self.batch_time) / max(cur_items - self.batch_items, 1)
+        if (self.verbose) and (self.tag is not None):
+            print(f'{self.tag:<19s} items {cur_items:<7d} time {dnnlib.util.format_time(total_time):<12s} ms/item {time_per_item*1e3:.2f}')
+        self.batch_time = cur_time
+        self.batch_items = cur_items
+
+        if (self.progress_fn is not None) and (self.num_items is not None):
+            self.progress_fn(self.pfn_lo + (self.pfn_hi - self.pfn_lo) * (cur_items / self.num_items), self.pfn_total)
+
+    def sub(self, tag=None, num_items=None, flush_interval=1000, rel_lo=0, rel_hi=1):
+        return ProgressMonitor(
+            tag             = tag,
+            num_items       = num_items,
+            flush_interval  = flush_interval,
+            verbose         = self.verbose,
+            progress_fn     = self.progress_fn,
+            pfn_lo          = self.pfn_lo + (self.pfn_hi - self.pfn_lo) * rel_lo,
+            pfn_hi          = self.pfn_lo + (self.pfn_hi - self.pfn_lo) * rel_hi,
+            pfn_total       = self.pfn_total,
+        )
+    
+#----------------------------------------------------------------------------
+
+activation = {}
+def getActivation(name):
+  def hook(model, input, output):
+    activation[name] = output.detach()
+  return hook
+
+
+#----------------------------------------------------------------------------
+
+class MetricOptions:
+    def __init__(self, G=None, G_kwargs={}, dataset_kwargs={}, num_gpus=1, rank=0, device=None, progress=None, cache=True, feature_network=None):
+        assert 0 <= rank < num_gpus
+        self.G              = G
+        self.G_kwargs       = dnnlib.EasyDict(G_kwargs)
+        self.dataset_kwargs = dnnlib.EasyDict(dataset_kwargs)
+        self.num_gpus       = num_gpus
+        self.rank           = rank
+        self.device         = device if device is not None else torch.device('cuda', rank)
+        self.progress       = progress.sub() if progress is not None and rank == 0 else ProgressMonitor()
+        self.cache          = cache
+        self.feature_network = feature_network
+
+#----------------------------------------------------------------------------
+
+_feature_detector_cache = dict()
+
+def get_feature_detector_name(url):
+    return os.path.splitext(url.split('/')[-1])[0]
+
+def get_feature_detector(url, device=torch.device('cpu'), num_gpus=1, rank=0, verbose=False):
+    assert 0 <= rank < num_gpus
+    key = (url, device)
+    if key not in _feature_detector_cache:
+        is_leader = (rank == 0)
+        if not is_leader and num_gpus > 1:
+            torch.distributed.barrier() # leader goes first
+        with dnnlib.util.open_url(url, verbose=(verbose and is_leader)) as f:
+            _feature_detector_cache[key] = dill.load(f).to(device)
+            # _feature_detector_cache[key] = pickle.load(f).to(device)
+        if is_leader and num_gpus > 1:
+            torch.distributed.barrier() # others follow
+    return _feature_detector_cache[key]
+
+#----------------------------------------------------------------------------
 
 
 class FeatureStats:
@@ -108,7 +202,7 @@ class FeatureStatsByClass():
         self.stats_by_class = [FeatureStats(capture_all=capture_all, capture_mean_cov=capture_mean_cov, max_items=max_items) for _ in range(num_classes)]
 
     def __getitem__(self, idx):
-        return self.stats_by_class[i]
+        return self.stats_by_class[idx]
 
     def __len__(self):
         return self.num_classes
@@ -167,7 +261,7 @@ class Split():
         obj = Split(s.reference_sets, s.evaluation_sets, s.reference_size, s.evaluation_size, s.seed)
         return obj
 
-    def _class_feature_stats_for_generator(self, stats, reference_set, opts, G, detector, detector_kwargs, batch_size=64, batch_gen=None, **stats_kwargs):
+    def _class_feature_stats_for_generator(self, stats, reference_set, opts, G, detector, detector_kwargs, batch_size=64, batch_gen=None, sfid=False, **stats_kwargs):
         while not stats.is_full():
             images = []
             for _i in range(batch_size // batch_gen):
@@ -217,7 +311,7 @@ class Split():
             detector.layers.mixed_6.conv.register_forward_hook(getActivation('mixed6_conv'))
 
         for cl in range(self.num_classes):
-            reference_set = reference_sets[cl]
+            reference_set = self.reference_sets[cl]
             reference_set = torch.stack([x for x in reference_set], dim=0).to(opts.device)
 
             self._class_feature_stats_for_generator(
@@ -229,6 +323,7 @@ class Split():
                 detector_kwargs = detector_kwargs,
                 batch_size      = batch_size,
                 batch_gen       = batch_gen,
+                sfid            = sfid,
                 **stats_kwargs
             )
 
@@ -236,7 +331,8 @@ class Split():
 
         return all_stats
 
-    def _class_feature_stats_for_dataset(self, stats, dataset, opts, detector, detector_kwargs, batch_size=64, data_loader_kwargs=None, shuffle_size=None, **stats_kwargs):
+    def _class_feature_stats_for_dataset(self, stats, dataset, opts, detector, detector_kwargs, batch_size=64, data_loader_kwargs=None, shuffle_size=None, sfid=False, **stats_kwargs):
+        num_items = self.evaluation_size
         item_subset = [(i * opts.num_gpus + opts.rank) % num_items for i in range((num_items - 1) // opts.num_gpus + 1)]
         if shuffle_size is not None:
             random.shuffle(item_subset)
@@ -323,6 +419,7 @@ class Split():
                 batch_size          = batch_size,
                 data_loader_kwargs  = data_loader_kwargs,
                 shuffle_size        = shuffle_size,
+                sfid                = sfid,
                 **stats_kwargs
             )
 
@@ -375,7 +472,7 @@ class ConditionalMetrics():
 
     def calc_metric(self, metric, **kwargs): # See metric_utils.MetricOptions for the full list of arguments.
         assert metric in self.metrics
-        opts = metric_utils.MetricOptions(**kwargs)
+        opts = MetricOptions(**kwargs)
 
         # Calculate.
         start_time = time.time()
