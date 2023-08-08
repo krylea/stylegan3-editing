@@ -120,17 +120,7 @@ def compute_fid(split, opts, sfid=False, rfid=False, aggregate=False):
 
 #----------------------------------------------------------------------------
 
-def report_metric(result_dict, run_dir=None, snapshot_pkl=None):
-    metric = result_dict['metric']
-    assert is_valid_metric(metric)
-    if run_dir is not None and snapshot_pkl is not None:
-        snapshot_pkl = os.path.relpath(snapshot_pkl, run_dir)
 
-    jsonl_line = json.dumps(dict(result_dict, snapshot_pkl=snapshot_pkl, timestamp=time.time()))
-    print(jsonl_line)
-    if run_dir is not None and os.path.isdir(run_dir):
-        with open(os.path.join(run_dir, f'metric-{metric}.jsonl'), 'at') as f:
-            f.write(jsonl_line + '\n')
 
 
 #----------------------------------------------------------------------------

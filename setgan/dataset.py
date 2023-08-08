@@ -304,11 +304,13 @@ def load_imagenet(resolution):
 def load_vggface(resolution):
     return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
 
-def load_celeba_by_attributes(resolution):
-    return ImagesDataset.from_folder_by_attributes(dataset_paths['celeba-src'], dataset_paths['celeba-attr'], resolution)
+def load_celeba_by_attributes(resolution, val_frac=0.1):
+    datasets = ImagesDataset.from_folder_by_attributes(dataset_paths['celeba-src'], dataset_paths['celeba-attr'], resolution)
+    return split_datasets(datasets, val_frac, randomize=False)
 
-def load_celeba_by_identities(resolution):
-    return ImagesDataset.from_folder_by_identities(dataset_paths['celeba-src'], dataset_paths['celeba-ident'], resolution)
+def load_celeba_by_identities(resolution, val_frac=0.1):
+    datasets = ImagesDataset.from_folder_by_identities(dataset_paths['celeba-src'], dataset_paths['celeba-ident'], resolution)
+    return split_datasets(datasets, val_frac, randomize=False)
 
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
@@ -319,6 +321,16 @@ def build_datasets(dataset_name, resolution):
     elif dataset_name == 'celeba':
         return load_celeba_by_attributes(resolution)
 
+def split_datasets(datasets, val_frac, randomize=False, seed=None):
+    N = len(datasets)
+    N_val = int(val_frac * N)
+    if randomize:
+        rng = torch.Generator()
+        if seed is not None:
+            rng.manual_seed(seed)
+        p = torch.randperm(N, generator=rng)
+        datasets = datasets[p]
+    return datasets[:N_val], datasets[N_val:]
 
 
 
@@ -492,7 +504,7 @@ class ImageMultiSetGenerator():
             dataset_inds = torch.randint(self.n, (batch_size,), generator=rng)
         else:
             dataset_inds = class_id if isinstance(class_id, torch.Tensor) else torch.ones(batch_size, dtype=torch.int)*class_id
-            
+
         sets = []
         for i in range(batch_size):
             if rng is None:
