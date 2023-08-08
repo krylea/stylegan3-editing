@@ -338,7 +338,7 @@ class Split():
             random.shuffle(item_subset)
             item_subset = item_subset[:shuffle_size]
 
-        for images in tqdm(torch.utils.data.DataLoader(dataset=dataset, sampler=item_subset, batch_size=batch_size, **data_loader_kwargs)):
+        for images in torch.utils.data.DataLoader(dataset=dataset, sampler=item_subset, batch_size=batch_size, **data_loader_kwargs):
             if images.shape[1] == 1:
                 images = images.repeat([1, 3, 1, 1])
 
