@@ -15,8 +15,8 @@ import contextlib
 from pg_modules.projector import F_RandomProj
 from pathlib import Path
 import dill
-from torch_utils import gen_utils
-import safe_dataset
+from models.styleganxl.torch_utils import gen_utils
+import setgan.safe_dataset
 
 from torch.utils.data import Subset
 
