@@ -305,10 +305,10 @@ def training_loop(
         id_tensor = torch.arange(0, 1000)
         reference_set = training_set_generator(batch_size, set_sizes=(4), class_ids=id_tensor)
 
-        for i in range(reference_set):
-            images = reference_set[i]
-            name = 'ref' + str(i)
-            save_image_grid(images, os.path.join(run_dir, name), drange=[0,255], grid_size=grid_size)
+        #for i in range(reference_set):
+            #images = reference_set[i]
+            #name = 'ref' + str(i)
+            #save_image_grid(images, os.path.join(run_dir, name), drange=[0,255], grid_size=grid_size)
 
         # generate s
         grid_s = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
