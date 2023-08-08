@@ -297,6 +297,7 @@ def training_loop(
 
     # Export sample images.
 
+    '''
     if rank == 0:
         print('Exporting sample images...')
         
@@ -317,6 +318,7 @@ def training_loop(
         for i, (ref_img, gen_img) in enumerate(zip(reference_set[:1000], generated_images)):
             name = "fakes_init" + str(i)
             save_image_grid(ref_img, os.path.join(run_dir, name), drange=[-1,1], grid_size=grid_size, generated_img=gen_img)
+    '''
 
     # Initialize logs.
     if rank == 0:

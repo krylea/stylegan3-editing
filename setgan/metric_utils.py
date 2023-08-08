@@ -20,7 +20,7 @@ import setgan.safe_dataset
 
 from torch.utils.data import Subset
 
-
+from setgan.metrics import _metric_dict, is_valid_metric
 
 
 class FeatureStats:
@@ -351,7 +351,7 @@ class ConditionalMetrics():
 
         reference_sets = []
         evaluation_sets = []
-        for cl in class_datasets:
+        for cl in self.class_datasets:
             N = len(cl)
             p = torch.randperm(N, generator=rng)
             assert reference_size + evaluation_size <= N
