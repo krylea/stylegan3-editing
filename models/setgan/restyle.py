@@ -13,7 +13,8 @@ class Restyle(nn.Module):
         self.latent_avg = latent_avg
         self.iters = iters
 
-        self.avg_image = self.decoder.synthesis(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
+        with torch.no_grad():
+            self.avg_image = self.decoder.synthesis(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
         self.avg_image = self.avg_image.float().detach()
         self.latent_avg = self.latent_avg
     
