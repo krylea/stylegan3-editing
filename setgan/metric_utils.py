@@ -351,7 +351,7 @@ class ConditionalMetrics():
 
         reference_sets = []
         evaluation_sets = []
-        for cl in class_datasets:
+        for cl in self.class_datasets:
             N = len(cl)
             p = torch.randperm(N, generator=rng)
             assert reference_size + evaluation_size <= N
