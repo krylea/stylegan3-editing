@@ -125,7 +125,7 @@ def weight_reset(m):
 
 def training_loop(
     run_dir                 = '.',      # Output directory.
-    training_set_kwargs     = {},       # Options for training set.
+    dataset_kwargs     = {},       # Options for training set.
     data_loader_kwargs      = {},       # Options for torch.utils.data.DataLoader.
     G_kwargs                = {},       # Options for generator network.
     D_kwargs                = {},       # Options for discriminator network.
@@ -182,10 +182,10 @@ def training_loop(
     # Load training set.
     if rank == 0:
         print('Loading training set...')
-    #training_set = safe_dataset.SafeDataset(dnnlib.util.construct_class_by_name(**training_set_kwargs)) # subclass of training.dataset.Dataset
+    #training_set = safe_dataset.SafeDataset(dnnlib.util.construct_class_by_name(**dataset_kwargs)) # subclass of training.dataset.Dataset
     #training_set_sampler = misc.InfiniteSampler(dataset=training_set, rank=rank, num_replicas=num_gpus, seed=random_seed)
     #training_set_iterator = iter(torch.utils.data.DataLoader(dataset=training_set, sampler=training_set_sampler, batch_size=batch_size//num_gpus, **data_loader_kwargs))
-    training_set, validation_set = build_datasets(**training_set_kwargs)
+    training_set, validation_set = build_datasets(**dataset_kwargs)
     training_set = [safe_dataset.SafeDataset(x) for x in training_set]
     validation_set = [safe_dataset.SafeDataset(x) for x in validation_set]
     training_set_generator = ImageMultiSetGenerator(training_set, rank=rank, world_size=num_gpus)
@@ -336,7 +336,7 @@ def training_loop(
             print('Skipping tfevents export:', err)
 
 
-    all_metrics = ConditionalMetrics(validation_set, dataset_name=training_set_kwargs['dataset_name'])
+    all_metrics = ConditionalMetrics(validation_set, dataset_name=dataset_kwargs['dataset_name'])
     all_metrics.add_split('base', reference_size=10, evaluation_size=100, generation_size=100, seed=0)
 
     for metric in metrics:
@@ -496,7 +496,7 @@ def training_loop(
         snapshot_pkl = None
         snapshot_data = None
         if (network_snapshot_ticks is not None) and (done or cur_tick % network_snapshot_ticks == 0):
-            snapshot_data = dict(G=G, D=D, G_ema=G_ema, augment_pipe=augment_pipe, training_set_kwargs=dict(training_set_kwargs))
+            snapshot_data = dict(G=G, D=D, G_ema=G_ema, augment_pipe=augment_pipe, dataset_kwargs=dict(dataset_kwargs))
             for key, value in snapshot_data.items():
                 if isinstance(value, torch.nn.Module):
                     # value = copy.deepcopy(value).eval().requires_grad_(False)
@@ -542,7 +542,7 @@ def training_loop(
                 print('Evaluating metrics...')
             for metric in all_metrics.metrics:
                 result_dict = all_metrics.calc_metric(metric=metric, G=snapshot_data['G_ema'],
-                                                      dataset_kwargs=training_set_kwargs, num_gpus=num_gpus, rank=rank, device=device)
+                                                      dataset_kwargs=dataset_kwargs, num_gpus=num_gpus, rank=rank, device=device)
                 if rank == 0:
                     all_metrics.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=snapshot_pkl)
                 stats_metrics.update(result_dict.results)
