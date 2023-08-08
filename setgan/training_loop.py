@@ -292,7 +292,6 @@ def training_loop(
     # Export sample images.
 
     grid_size = None
-    grid_c = None
     if rank == 0:
         print('Exporting sample images...')
         grid_size, images, labels = setup_snapshot_image_grid(training_set=training_set)
@@ -310,7 +309,7 @@ def training_loop(
         # pass s and ref set
         generated_images = []
         for i in range(1000):
-            generated_imgs = generator(grid_s, reference_set[i], grid_c) # generator generates a set of images?
+            generated_imgs = G_ema(reference_set[i], grid_s) # generator generates a set of images?
             generated_images.append(generated_imgs)
         # generated_images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for s, c in zip(grid_s, grid_c)]).numpy()
 
