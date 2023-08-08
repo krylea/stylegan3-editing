@@ -42,9 +42,9 @@ STEP_INTERVAL=1000
 def setup_snapshot_image_grid(training_set, random_seed=0, gw=None, gh=None):
     rnd = np.random.RandomState(random_seed)
     if gw is None:
-        gw = np.clip(7680 // training_set.image_shape[2], 7, 32)
+        gw = np.clip(7680 // training_set[0].image_shape[2], 7, 32)
     if gh is None:
-        gh = np.clip(4320 // training_set.image_shape[1], 4, 32)
+        gh = np.clip(4320 // training_set[0].image_shape[1], 4, 32)
 
     # No labels => show random subset of training samples.
     if not training_set.has_labels:
@@ -298,33 +298,26 @@ def training_loop(
     # Export sample images.
 
     '''
-    grid_size = None
     if rank == 0:
         print('Exporting sample images...')
-        grid_size, images, labels = setup_snapshot_image_grid(training_set=training_set)
-        # generate a few reference sets (assume set size of 4 for now)
+        
+        # Getting grid information and labels
+        grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
+        
+        # Generate reference sets (assuming set size of 4 for now)
         id_tensor = torch.arange(0, 1000)
         reference_set = training_set_generator(batch_size, set_sizes=(4), class_ids=id_tensor)
-
-        #for i in range(reference_set):
-            #images = reference_set[i]
-            #name = 'ref' + str(i)
-            #save_image_grid(images, os.path.join(run_dir, name), drange=[0,255], grid_size=grid_size)
-
-        # generate s
+        
+        # Generate noise tensors
         grid_s = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
-        # pass s and ref set
-        generated_images = []
-        for i in range(1000):
-            generated_imgs = G_ema(reference_set[i], grid_s) # generator generates a set of images?
-            generated_images.append(generated_imgs)
-        # generated_images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for s, c in zip(grid_s, grid_c)]).numpy()
-
-        # ref set + gen set (left side ref, right side gen) (1000 classes)
-        for i in range(1000):
+        
+        # Generate images based on reference set and noise tensors
+        generated_images = [G_ema(ref_set, s) for ref_set, s in zip(reference_set[:1000], grid_s)]
+        
+        # Save the combined reference and generated images side-by-side
+        for i, (ref_img, gen_img) in enumerate(zip(reference_set[:1000], generated_images)):
             name = "fakes_init" + str(i)
-            save_image_grid(reference_set[i], os.path.join(run_dir, name), drange=[-1,1], 
-                            grid_size=grid_size, generated_img = generated_images[i])
+            save_image_grid(ref_img, os.path.join(run_dir, name), drange=[-1,1], grid_size=grid_size, generated_img=gen_img)
     '''
 
     # Initialize logs.
