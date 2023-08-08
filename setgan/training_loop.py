@@ -33,6 +33,8 @@ import setgan.safe_dataset as safe_dataset
 from setgan.dataset import ImageMultiSetGenerator, ImagesDataset, build_datasets
 from models.setgan.setgan import SetGAN
 
+from setgan.metric_utils import ConditionalMetrics
+
 STEP_INTERVAL=1000
 
 #----------------------------------------------------------------------------
@@ -140,6 +142,7 @@ def training_loop(
     restart_every           = -1,       # Time interval in seconds to exit code
     reference_size          = (7,12),
     candidate_size          = (1,4),
+    eval_metric             = 'fid-agg'
 ):
     # Initialize.
     start_time = time.time()
@@ -303,6 +306,13 @@ def training_loop(
             stats_tfevents = tensorboard.SummaryWriter(run_dir)
         except ImportError as err:
             print('Skipping tfevents export:', err)
+
+
+    all_metrics = ConditionalMetrics(training_set)
+    all_metrics.add_split('base', reference_size=10, evaluation_size=100, generation_size=100, seed=0)
+
+    for metric in metrics:
+        all_metrics.add_metric(metric)
 
     # Train.
     if rank == 0:
@@ -494,30 +504,30 @@ def training_loop(
 
         # Evaluate metrics.
         # if (snapshot_data is not None) and (len(metrics) > 0):
-        '''
+        
         if cur_tick and (snapshot_data is not None) and (len(metrics) > 0):
             if rank == 0:
                 print('Evaluating metrics...')
-            for metric in metrics:
-                result_dict = metric_main.calc_metric(metric=metric, G=snapshot_data['G_ema'],
+            for metric in all_metrics.metrics:
+                result_dict = all_metrics.calc_metric(metric=metric, G=snapshot_data['G_ema'],
                                                       dataset_kwargs=training_set_kwargs, num_gpus=num_gpus, rank=rank, device=device)
                 if rank == 0:
-                    metric_main.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=snapshot_pkl)
+                    all_metrics.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=snapshot_pkl)
                 stats_metrics.update(result_dict.results)
 
             # save best fid ckpt
             snapshot_pkl = os.path.join(run_dir, f'best_model.pkl')
             cur_nimg_txt = os.path.join(run_dir, f'best_nimg.txt')
             if rank == 0:
-                if 'fid50k_full' in stats_metrics and stats_metrics['fid50k_full'] < best_fid:
-                    best_fid = stats_metrics['fid50k_full']
+                if eval_metric in stats_metrics and stats_metrics[eval_metric] < best_fid:
+                    best_fid = stats_metrics[eval_metric]
 
                     with open(snapshot_pkl, 'wb') as f:
                         dill.dump(snapshot_data, f)
                     # save curr iteration number (directly saving it to pkl leads to problems with multi GPU)
                     with open(cur_nimg_txt, 'w') as f:
                         f.write(str(cur_nimg))
-        '''
+        
 
         del snapshot_data # conserve memory
 

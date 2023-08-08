@@ -127,10 +127,13 @@ class SetGAN(nn.Module):
 
         codes = self.encoder(to_images(x))
         codes = codes - self.latent_avg.repeat(codes.shape[0], 1, 1).to(codes.device)
-
         codes = codes.view(bs, rs, *codes.size()[1:])
-        style_latents = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
-        style_latents = style_latents.view(*s.size()[:-1], *style_latents.size()[-2:])
+
+        if input_code:
+            style_latents = s
+        else:
+            style_latents = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
+            style_latents = style_latents.view(*s.size()[:-1], *style_latents.size()[-2:])
 
         transformed_codes = self.style_attn(codes, style_latents)
         transformed_codes = transformed_codes + self.latent_avg.repeat(*transformed_codes.size()[:2], 1, 1).to(transformed_codes.device)

@@ -315,6 +315,7 @@ def init_sgxl_args(opts, c):
 @click.option('--restyle_mode', type=click.Choice(['none', 'encoder', 'resetgan', 'resetgan2']), default='encoder')
 @click.option('--restyle_iters', type=int, default=3)
 @click.option('--use_setgan', is_flag=True)
+@click.option('--eval_metric', type=str, default='fid-agg')
 
 def main(**kwargs):
     # Initialize config.
@@ -343,6 +344,7 @@ def main(**kwargs):
     c.G_opt_kwargs.lr = (0.002 if opts.cfg == 'stylegan2' else 0.0025) if opts.glr is None else opts.glr
     c.D_opt_kwargs.lr = opts.dlr
     c.metrics = opts.metrics
+    c.eval_metric = opts.eval_metric
     c.total_kimg = opts.kimg
     c.kimg_per_tick = opts.tick
     c.image_snapshot_ticks = c.network_snapshot_ticks = opts.snap
