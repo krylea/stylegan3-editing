@@ -367,7 +367,7 @@ class Split():
                 det_name = get_feature_detector_name(detector_url)
 
             # Choose cache file name.
-            dataset_name = Path(opts.dataset_kwargs.path).stem
+            dataset_name = opts.dataset_kwargs.dataset_name
             args = dict(dataset_kwargs=opts.dataset_kwargs, detector_url=detector_url, detector_kwargs=detector_kwargs, stats_kwargs=stats_kwargs, sfid=sfid, shuffle_size=shuffle_size)
             md5 = hashlib.md5(repr(sorted(args.items())).encode('utf-8'))
             cache_tag = f'{dataset_name}-{det_name}-{md5.hexdigest()}'
