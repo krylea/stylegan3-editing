@@ -20,7 +20,7 @@ import setgan.safe_dataset
 
 from torch.utils.data import Subset
 
-
+from setgan.metrics import _metric_dict, is_valid_metric
 
 
 class FeatureStats:
