@@ -261,7 +261,7 @@ class Split():
     def load(pkl_file):
         with open(pkl_file, 'rb') as f:
             s = dnnlib.EasyDict(pickle.load(f))
-        obj = Split(s.reference_sets, s.evaluation_sets, s.reference_size, s.evaluation_size, s.seed)
+        obj = Split(s.reference_sets, s.evaluation_sets, s.generation_size, s.seed)
         return obj
 
     def _class_feature_stats_for_generator(self, stats, reference_set, opts, G, detector, detector_kwargs, batch_size=64, batch_gen=None, sfid=False, **stats_kwargs):
