@@ -236,7 +236,7 @@ class FeatureStatsByClass():
     def load(pkl_file):
         with open(pkl_file, 'rb') as f:
             s = dnnlib.EasyDict(pickle.load(f))
-        obj = FeatureStatsByClass(s.num_classes, capture_all=s.capture_all, max_items=s.max_items)
+        obj = FeatureStatsByClass(s.num_classes, capture_all=s.capture_all, capture_mean_cov=s.capture_mean_cov, max_items=s.max_items)
         obj.__dict__.update(s)
         return obj
 
@@ -385,7 +385,7 @@ class Split():
 
             # Load.
             if flag:
-                return FeatureStats.load(cache_file)
+                return FeatureStatsByClass.load(cache_file)
 
         #print('Calculating the stats for this dataset the first time\n')
         #print(f'Saving them to {cache_file}')
