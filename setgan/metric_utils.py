@@ -268,7 +268,7 @@ class Split():
         while not stats.is_full():
             images = []
             for _i in range(batch_size // batch_gen):
-                s = gen_utils.get_w_from_seed(G, batch_gen, opts.device, **opts.G_kwargs)
+                s = gen_utils.get_w_from_seed(G.decoder, batch_gen, opts.device, **opts.G_kwargs)
                 img = G(reference_set, s)
 
                 img = (img * 127.5 + 128).clamp(0, 255).to(torch.uint8)
