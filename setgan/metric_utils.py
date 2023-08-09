@@ -191,13 +191,16 @@ class FeatureStats:
     def load(pkl_file):
         with open(pkl_file, 'rb') as f:
             s = dnnlib.EasyDict(pickle.load(f))
-        obj = FeatureStatsByClass(capture_all=s.capture_all, max_items=s.max_items)
+        obj = FeatureStats(capture_all=s.capture_all, max_items=s.max_items)
         obj.__dict__.update(s)
         return obj
 
 
 class FeatureStatsByClass():
     def __init__(self, num_classes, capture_all=False, capture_mean_cov=False, max_items=None):
+        self.capture_all = capture_all
+        self.capture_mean_cov = capture_mean_cov
+        self.max_items = max_items
         self.num_classes = num_classes
         self.stats_by_class = [FeatureStats(capture_all=capture_all, capture_mean_cov=capture_mean_cov, max_items=max_items) for _ in range(num_classes)]
 
@@ -233,7 +236,7 @@ class FeatureStatsByClass():
     def load(pkl_file):
         with open(pkl_file, 'rb') as f:
             s = dnnlib.EasyDict(pickle.load(f))
-        obj = FeatureStats(s.num_classes, capture_all=s.capture_all, max_items=s.max_items)
+        obj = FeatureStatsByClass(s.num_classes, capture_all=s.capture_all, max_items=s.max_items)
         obj.__dict__.update(s)
         return obj
 
