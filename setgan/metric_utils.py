@@ -269,7 +269,7 @@ class Split():
             images = []
             for _i in range(batch_size // batch_gen):
                 s = gen_utils.get_w_from_seed(G.decoder, batch_gen, opts.device, **opts.G_kwargs).unsqueeze(0)
-                img = G(reference_set, s).squeeze(0)
+                img = G(reference_set, s, input_code=True).squeeze(0)
 
                 img = (img * 127.5 + 128).clamp(0, 255).to(torch.uint8)
                 images.append(img)
