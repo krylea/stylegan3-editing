@@ -268,8 +268,8 @@ class Split():
         while not stats.is_full():
             images = []
             for _i in range(batch_size // batch_gen):
-                s = gen_utils.get_w_from_seed(G.decoder, batch_gen, opts.device, **opts.G_kwargs)
-                img = G(reference_set, s)
+                s = gen_utils.get_w_from_seed(G.decoder, batch_gen, opts.device, **opts.G_kwargs).unsqueeze(0)
+                img = G(reference_set, s).squeeze(0)
 
                 img = (img * 127.5 + 128).clamp(0, 255).to(torch.uint8)
                 images.append(img)
@@ -315,7 +315,7 @@ class Split():
 
         for cl in range(self.num_classes):
             reference_set = self.reference_sets[cl]
-            reference_set = torch.stack([torch.tensor(x) for x in reference_set], dim=0).to(opts.device)
+            reference_set = torch.stack([torch.tensor(x) for x in reference_set], dim=0).unsqueeze(0).to(opts.device)
 
             self._class_feature_stats_for_generator(
                 stats           = all_stats[cl],
