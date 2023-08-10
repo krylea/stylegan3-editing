@@ -210,16 +210,16 @@ class FeatureStatsByClass():
     def __len__(self):
         return self.num_classes
     
-    def aggregate(self, capture_all=False, capture_mean_cov=False):
-        stats = FeatureStats(capture_all=capture_all, capture_mean_cov=capture_mean_cov)
+    def aggregate(self):
+        stats = FeatureStats(capture_all=self.capture_all, capture_mean_cov=self.capture_mean_cov)
 
         for stats_cl in self.stats_by_class:
             stats.num_items += stats_cl.num_items
 
-            if capture_all:
+            if self.capture_all:
                 stats.all_features += stats_cl.all_features
 
-            if capture_mean_cov:
+            if self.capture_mean_cov:
                 stats.raw_mean += stats_cl.raw_mean
                 stats.raw_cov += stats_cl.raw_cov
         
