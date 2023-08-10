@@ -511,7 +511,7 @@ class ConditionalMetrics():
             num_gpus        = opts.num_gpus,
         )
 
-    def report_metric(result_dict, run_dir=None, snapshot_pkl=None):
+    def report_metric(self, result_dict, run_dir=None, snapshot_pkl=None):
         metric = result_dict['metric']
         assert is_valid_metric(metric)
         if run_dir is not None and snapshot_pkl is not None:
