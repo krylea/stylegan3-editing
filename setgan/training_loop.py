@@ -80,7 +80,7 @@ def setup_snapshot_image_grid(training_set, random_seed=0, gw=None, gh=None):
 
 #----------------------------------------------------------------------------
 
-def save_image_grid(reference_img, fname, drange, grid_size, generated_img=None):
+def save_image_grid(reference_img, generated_img, fname, drange):
     lo, hi = drange
 
     # handle reference_img
@@ -88,22 +88,20 @@ def save_image_grid(reference_img, fname, drange, grid_size, generated_img=None)
     reference_img = (reference_img- lo) * (255 / (hi - lo))
     reference_img = np.rint(reference_img).clip(0, 255).astype(np.uint8)
 
-    gw, gh = grid_size
-    _N, C, H, W = reference_img.shape
-    reference_img = reference_img.reshape([gh, gw, C, H, W])
+    N, M, C, H, W = reference_img.shape
+    #reference_img = reference_img.reshape([gh, gw, C, H, W])
     reference_img = reference_img.transpose(0, 3, 1, 4, 2)
-    reference_img = reference_img.reshape([gh * H, gw * W, C])
+    reference_img = reference_img.reshape([N * H, M * W, C])
 
     # handle genearted_img
     generated_img = np.asarray(generated_img, dtype=np.float32)
     generated_img = (generated_img - lo) * (255 / (hi - lo))
     generated_img = np.rint(generated_img).clip(0, 255).astype(np.uint8)
 
-    gw, gh = grid_size
-    _N, C, H, W = generated_img.shape
-    generated_img = generated_img.reshape([gh, gw, C, H, W])
+    N, M, C, H, W = generated_img.shape
+    #generated_img = generated_img.reshape([gh, gw, C, H, W])
     generated_img = generated_img.transpose(0, 3, 1, 4, 2)
-    generated_img = generated_img.reshape([gh * H, gw * W, C])
+    generated_img = generated_img.reshape([N * H, M * W, C])
 
 
     # Concatenate reference_img and generated_img along width axis
@@ -189,7 +187,7 @@ def training_loop(
     training_set = [safe_dataset.SafeDataset(x) for x in training_set]
     validation_set = [safe_dataset.SafeDataset(x) for x in validation_set]
     training_set_generator = ImageMultiSetGenerator(training_set, rank=rank, world_size=num_gpus)
-    valdiation_set_generator = ImageMultiSetGenerator(validation_set, rank=rank, world_size=num_gpus)
+    validation_set_generator = ImageMultiSetGenerator(validation_set, rank=rank, world_size=num_gpus)
     if rank == 0:
         print()
         print('Num images: ', len(training_set))
@@ -297,28 +295,37 @@ def training_loop(
 
     # Export sample images.
 
-    '''
+    
     if rank == 0:
         print('Exporting sample images...')
-        
-        # Getting grid information and labels
-        grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
-        
-        # Generate reference sets (assuming set size of 4 for now)
-        id_tensor = torch.arange(0, 1000)
-        reference_set = training_set_generator(batch_size, set_sizes=(4), class_ids=id_tensor)
-        
-        # Generate noise tensors
-        grid_s = torch.randn([labels.shape[0], G.decoder.z_dim], device=device).split(batch_gpu)
-        
-        # Generate images based on reference set and noise tensors
-        generated_images = [G_ema(ref_set, s) for ref_set, s in zip(reference_set[:1000], grid_s)]
-        
-        # Save the combined reference and generated images side-by-side
-        for i, (ref_img, gen_img) in enumerate(zip(reference_set[:1000], generated_images)):
-            name = "fakes_init" + str(i)
-            save_image_grid(ref_img, os.path.join(run_dir, name), drange=[-1,1], grid_size=grid_size, generated_img=gen_img)
-    '''
+
+        reference_path = os.path.join(run_dir, "sample_refs.pt")
+        if os.path.exists(reference_path):
+            samples_dict = torch.load(reference_path)
+            sample_refs = samples_dict['reference_set']
+            grid_s = samples_dict['s']
+        else:
+            # Generate reference sets (assuming set size of 5 for now)
+            N = len(validation_set)
+            sample_refs = validation_set_generator(N, set_sizes=(5,), class_ids=torch.arange(N)).split(batch_gpu)
+
+            # Getting grid information and labels
+            #grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
+
+            # Generate noise tensors
+            grid_s = torch.randn([N, 5, G.decoder.z_dim], device=device).split(batch_gpu)
+
+            # Generate images based on reference set and noise tensors
+            generated_images = [G_ema(ref_set.cuda(), s).cpu() for ref_set, s in zip(sample_refs, grid_s)]
+
+            samples_path_init = os.path.join(run_dir, "fakes_init.png")
+            save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1])
+
+            torch.save({
+                'reference_set': sample_refs,
+                's': grid_s
+            })
+    
 
     # Initialize logs.
     if rank == 0:
