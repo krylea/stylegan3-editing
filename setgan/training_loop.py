@@ -299,7 +299,7 @@ def training_loop(
     if rank == 0:
         print('Exporting sample images...')
 
-        reference_path = os.path.join(run_dir, "sample_refs.pt")
+        reference_path = os.path.join(run_dir, "samples.pt")
         if os.path.exists(reference_path):
             samples_dict = torch.load(reference_path)
             sample_refs = samples_dict['reference_set']
@@ -324,7 +324,7 @@ def training_loop(
             torch.save({
                 'reference_set': sample_refs,
                 's': grid_s
-            })
+            }, reference_path)
     
 
     # Initialize logs.
