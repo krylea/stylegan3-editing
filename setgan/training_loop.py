@@ -317,6 +317,7 @@ def training_loop(
 
             # Generate images based on reference set and noise tensors
             generated_images = [G_ema(ref_set.cuda(), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
+            generated_images = torch.cat(generated_images, dim=0)
 
             samples_path_init = os.path.join(run_dir, "fakes_init.png")
             save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1])
