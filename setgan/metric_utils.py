@@ -214,6 +214,7 @@ class FeatureStatsByClass():
         stats = FeatureStats(capture_all=self.capture_all, capture_mean_cov=self.capture_mean_cov)
 
         for stats_cl in self.stats_by_class:
+            stats.set_num_features(stats_cl.num_features)
             stats.num_items += stats_cl.num_items
 
             if self.capture_all:
