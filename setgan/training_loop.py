@@ -316,7 +316,7 @@ def training_loop(
             grid_s = torch.randn([N, 5, G.decoder.z_dim], device=device)
 
             # Generate images based on reference set and noise tensors
-            generated_images = [G_ema(ref_set.cuda(), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
+            generated_images = [G_ema(ref_set.to(device), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
             generated_images = torch.cat(generated_images, dim=0)
 
             samples_path_init = os.path.join(run_dir, "fakes_init.png")
@@ -496,9 +496,10 @@ def training_loop(
                 torch.distributed.barrier()
 
         # Save image snapshot.
-        #if (rank == 0) and (image_snapshot_ticks is not None) and (done or cur_tick % image_snapshot_ticks == 0):
-        #    images = torch.cat([G_ema(z=z, c=c, noise_mode='const').cpu() for z, c in zip(grid_z, grid_c)]).numpy()
-        #    save_image_grid(images, os.path.join(run_dir, f'fakes{cur_nimg//STEP_INTERVAL:06d}.png'), drange=[-1,1], grid_size=grid_size)
+        if (rank == 0) and (image_snapshot_ticks is not None) and (done or cur_tick % image_snapshot_ticks == 0):
+            generated_images = [G_ema(ref_set.to(device), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
+            generated_images = torch.cat(generated_images, dim=0)
+            save_image_grid(sample_refs, generated_images, os.path.join(run_dir, f'fakes{cur_nimg//STEP_INTERVAL:06d}.png'), drange=[-1,1])
 
         # Save network snapshot.
         snapshot_pkl = None
