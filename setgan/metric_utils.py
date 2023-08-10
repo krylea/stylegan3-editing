@@ -313,7 +313,7 @@ class Split():
         if sfid:
             detector.layers.mixed_6.conv.register_forward_hook(getActivation('mixed6_conv'))
 
-        for cl in range(self.num_classes):
+        for cl in tqdm(range(self.num_classes)):
             reference_set = self.reference_sets[cl]
             reference_set = torch.stack([torch.tensor(x) for x in reference_set], dim=0).unsqueeze(0).to(opts.device)
 
@@ -410,7 +410,7 @@ class Split():
         if sfid:
             detector.layers.mixed_6.conv.register_forward_hook(getActivation('mixed6_conv'))
 
-        for cl in range(self.num_classes):
+        for cl in tqdm(range(self.num_classes)):
             dataset = self.evaluation_sets[cl]
 
             self._class_feature_stats_for_dataset(
