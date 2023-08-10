@@ -307,16 +307,16 @@ def training_loop(
         else:
             # Generate reference sets (assuming set size of 5 for now)
             N = len(validation_set)
-            sample_refs = validation_set_generator(N, set_sizes=(5,), class_id=torch.arange(N)).split(batch_gpu)
+            sample_refs, = validation_set_generator(N, set_sizes=(5,), class_id=torch.arange(N))
 
             # Getting grid information and labels
             #grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
 
             # Generate noise tensors
-            grid_s = torch.randn([N, 5, G.decoder.z_dim], device=device).split(batch_gpu)
+            grid_s = torch.randn([N, 5, G.decoder.z_dim], device=device)
 
             # Generate images based on reference set and noise tensors
-            generated_images = [G_ema(ref_set.cuda(), s).cpu() for ref_set, s in zip(sample_refs, grid_s)]
+            generated_images = [G_ema(ref_set.cuda(), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
 
             samples_path_init = os.path.join(run_dir, "fakes_init.png")
             save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1])
