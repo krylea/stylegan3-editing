@@ -55,6 +55,8 @@ argstring="$argstring \
 --restyle_mode encoder \
 --restyle_iters 1 \
 --step_interval 200 \
+--freeze_encoder \
+--freeze_decoder \
 --use_setgan"
 
 if [[ -n $ckpt ]]

@@ -317,6 +317,8 @@ def init_sgxl_args(opts, c):
 @click.option('--use_setgan', is_flag=True)
 @click.option('--eval_metric', type=str, default='fid-agg')
 @click.option('--step_interval', type=int, default=1000)
+@click.option('--freeze_encoder', is_flag=True)
+@click.option('--freeze_decoder', is_flag=True)
 
 def main(**kwargs):
     # Initialize config.

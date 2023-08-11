@@ -458,6 +458,9 @@ def training_loop(
         if (not done) and (cur_tick != 0) and (cur_nimg < tick_start_nimg + kimg_per_tick * step_interval):
             continue
 
+        G.update_latent_avg()
+        G_ema.update_latent_avg()
+
         # Print status line, accumulating the same information in training_stats.
         tick_end_time = time.time()
         fields = []

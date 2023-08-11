@@ -5,7 +5,7 @@ import torch.nn as nn
 from setgan.utils import to_images
 
 class Restyle(nn.Module):
-    def __init__(self, encoder, decoder, latent_avg, n_styles, iters=3):
+    def __init__(self, encoder, decoder, latent_avg, avg_image, n_styles, iters=3):
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -13,10 +13,8 @@ class Restyle(nn.Module):
         self.latent_avg = latent_avg
         self.iters = iters
 
-        with torch.no_grad():
-            self.avg_image = self.decoder.synthesis(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
-        self.avg_image = self.avg_image.float().detach()
         self.latent_avg = self.latent_avg
+        self.avg_image = avg_image
     
     def forward(self, x, iters=None, return_latents=False, return_intermediates=False):
         iters = iters if iters is not None else self.iters

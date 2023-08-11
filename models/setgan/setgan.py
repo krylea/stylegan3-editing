@@ -9,6 +9,7 @@ from utils import common
 
 from models.setgan.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
+from models.styleganxl.training.networks_stylegan3_resetting import SuperresGenerator, Generator
 from setgan.utils import to_images, to_imgset, to_set
 from models.setgan.restyle import Restyle
 
@@ -65,12 +66,35 @@ class SetGAN(nn.Module):
         self.opts.style_dim = self.decoder.w_dim
         self.style_attn = StyleAttention(opts)
 
-        for parameter in self.decoder.mapping.parameters():
-            parameter.requires_grad_(False)
+        if True:
+            for parameter in self.decoder.mapping.parameters():
+                parameter.requires_grad_(False)
+
+        if opts.freeze_encoder:
+            for parameter in self.encoder.parameters():
+                parameter.requires_grad_(False)
+
+        if opts.freeze_decoder:
+            for parameter in self.decoder.parameters():
+                parameter.requires_grad_(False)
+
+        self.update_latent_avg()
 
         if self.opts.restyle_mode == 'encoder':
-            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.opts.n_styles, iters=self.opts.restyle_iters)
+            self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.avg_image, self.opts.n_styles, iters=self.opts.restyle_iters)
 
+    def update_latent_avg(self):
+        self.latent_avg = self.decoder.mapping.w_avg.cpu()
+        with torch.no_grad():
+            self.avg_image = self.decoder.synthesis(self.latent_avg.repeat(self.n_styles, 1).unsqueeze(0))[0]
+        self.avg_image = self.avg_image.float().detach()
+
+        if self.opts.restyle_mode == 'encoder':
+            self.encoder.latent_avg = self.latent_avg
+            self.encoder.avg_image = self.avg_image
+
+    def set_decoder(self):
+        pass
 
     def set_encoder(self):
         if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
@@ -88,12 +112,12 @@ class SetGAN(nn.Module):
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
             self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
             self.decoder.load_state_dict(self._get_keys(ckpt, 'decoder', remove=["synthesis.input.transform"]), strict=False)
-            self._load_latent_avg(ckpt)
+            #self._load_latent_avg(ckpt)
         else:
             encoder_ckpt = self._get_encoder_checkpoint()
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
             self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
-            self.latent_avg = self.decoder.mapping.w_avg.cpu()
+            #self.latent_avg = self.decoder.mapping.w_avg.cpu()
 
     def decode(self, x, transform=None, resize=True, **kwargs):
         if transform is not None:
