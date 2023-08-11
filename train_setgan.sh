@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-gpu=1
 #SBATCH --mem=50GB
 
-BATCH_PER_GPU=16
+BATCH_PER_GPU=2
 
 RES=$1
 DATASET_NAME=$2
@@ -48,12 +48,13 @@ argstring="$argstring \
 --encoder_type ProgressiveBackboneEncoder \
 --input_nc 6 \
 --n_styles 18 \
---reference_size 7 12 \
+--reference_size 4 7 \
 --candidate_size 1 4 \
---attn_layers 4 \
+--attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
---restyle_iters 3 \
+--restyle_iters 1 \
+--step_interval 200
 --use_setgan"
 
 if [[ -n $ckpt ]]

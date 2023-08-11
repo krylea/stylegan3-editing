@@ -316,6 +316,7 @@ def init_sgxl_args(opts, c):
 @click.option('--restyle_iters', type=int, default=3)
 @click.option('--use_setgan', is_flag=True)
 @click.option('--eval_metric', type=str, default='fid-agg')
+@click.option('--step_interval', type=int, default=1000)
 
 def main(**kwargs):
     # Initialize config.
@@ -353,6 +354,8 @@ def main(**kwargs):
 
     c.reference_size = opts.reference_size
     c.candidate_size = opts.candidate_size
+
+    c.step_interval = opts.step_interval
 
     # Sanity checks.
     if c.batch_size % c.num_gpus != 0:
