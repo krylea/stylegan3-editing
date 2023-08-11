@@ -54,7 +54,7 @@ argstring="$argstring \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
 --restyle_iters 1 \
---step_interval 200
+--step_interval 200 \
 --use_setgan"
 
 if [[ -n $ckpt ]]
