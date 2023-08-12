@@ -211,6 +211,9 @@ def init_sgxl_args(opts, c):
     c.G_kwargs.conv_kernel = 1 if opts.cfg == 'stylegan3-r' else 3
     c.G_kwargs.use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
 
+    c.G_kwargs.freeze_encoder = opts.freeze_encoder
+    c.G_kwargs.freeze_decoder = opts.freeze_decoder
+
     if opts.cfg == 'stylegan3-r':
         c.G_kwargs.channel_base *= 2
         c.G_kwargs.channel_max *= 2
@@ -358,6 +361,7 @@ def main(**kwargs):
     c.candidate_size = opts.candidate_size
 
     c.step_interval = opts.step_interval
+
 
     # Sanity checks.
     if c.batch_size % c.num_gpus != 0:
