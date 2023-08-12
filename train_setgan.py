@@ -164,6 +164,8 @@ def init_setgan_args(opts, c):
     c.G_kwargs.train_decoder = opts.train_decoder
     c.G_kwargs.restyle_mode = opts.restyle_mode
     c.G_kwargs.restyle_iters = opts.restyle_iters
+    c.G_kwargs.freeze_encoder = opts.freeze_encoder
+    c.G_kwargs.freeze_decoder = opts.freeze_decoder
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
@@ -211,8 +213,7 @@ def init_sgxl_args(opts, c):
     c.G_kwargs.conv_kernel = 1 if opts.cfg == 'stylegan3-r' else 3
     c.G_kwargs.use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
 
-    c.G_kwargs.freeze_encoder = opts.freeze_encoder
-    c.G_kwargs.freeze_decoder = opts.freeze_decoder
+
 
     if opts.cfg == 'stylegan3-r':
         c.G_kwargs.channel_base *= 2
