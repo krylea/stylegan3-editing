@@ -58,7 +58,7 @@ class SetGAN(nn.Module):
 
     def __init__(self, opts):
         super(SetGAN, self).__init__()
-        self.set_opts(opts)
+        self.opts=opts
         # Define architecture
         self.n_styles = opts.n_styles
         #self.encoder = self.set_encoder()
