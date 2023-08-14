@@ -413,8 +413,6 @@ def main(**kwargs):
     c.reference_size = opts.reference_size
     c.candidate_size = opts.candidate_size
 
-    c.model_resolution = opts.model_resolution
-
     c.step_interval = opts.step_interval
 
 
