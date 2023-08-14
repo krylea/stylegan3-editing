@@ -3,7 +3,7 @@ from torch import nn
 import os
 
 from configs.paths_config import model_paths
-from setgan.encoder.encoders import restyle_e4e_encoders
+from models.setgan.encoder.encoders import restyle_e4e_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
 
