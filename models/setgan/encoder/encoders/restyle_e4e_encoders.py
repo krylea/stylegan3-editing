@@ -4,8 +4,8 @@ from torch import nn
 from torch.nn import Conv2d, BatchNorm2d, PReLU, Sequential, Module
 from torchvision.models import resnet34
 
-from setgan.encoder.encoders.helpers import get_blocks, bottleneck_IR, bottleneck_IR_SE
-from setgan.encoder.encoders.map2style import GradualStyleBlock
+from models.setgan.encoder.encoders.helpers import get_blocks, bottleneck_IR, bottleneck_IR_SE
+from models.setgan.encoder.encoders.map2style import GradualStyleBlock
 
 
 class ProgressiveStage(Enum):
