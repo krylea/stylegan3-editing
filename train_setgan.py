@@ -204,6 +204,9 @@ def init_setgan_args(opts, c):
     c.G_kwargs.decoder_kwargs.mapping_kwargs.rand_embedding = False
     c.G_kwargs.decoder_kwargs.num_layers = opts.syn_layers
     c.G_kwargs.decoder_kwargs.mapping_kwargs.num_layers = 2
+    c.G_kwargs.decoder_kwargs.c_dim = 0
+    c.G_kwargs.decoder_kwargs.img_resolution = opts.resolution
+    c.G_kwargs.decoder_kwargs.img_channels = 3
 
     if opts.use_pretrained:
         c.G_kwargs.encoder_ckpt = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
@@ -242,6 +245,7 @@ def init_setgan_args(opts, c):
         assert opts.encoder_res > opts.resolution
         c.downsample_res = opts.resolution
         c.dataset_kwargs.resolution = opts.encoder_res
+        c.G_kwargs.decoder_kwargs.img_resolution = opts.encoder_res
 
 def init_sgxl_args(opts, c):
     c.dataset_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
