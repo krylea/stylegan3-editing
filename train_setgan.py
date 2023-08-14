@@ -244,8 +244,9 @@ def init_setgan_args(opts, c):
     if opts.encoder_res > 0:
         assert opts.encoder_res > opts.resolution
         c.downsample_res = opts.resolution
+        c.G_kwargs.decoder_kwargs.img_resolution = opts.resolution
         c.dataset_kwargs.resolution = opts.encoder_res
-        c.G_kwargs.decoder_kwargs.img_resolution = opts.encoder_res
+        
 
 def init_sgxl_args(opts, c):
     c.dataset_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
