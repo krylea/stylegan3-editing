@@ -194,7 +194,7 @@ def init_setgan_args(opts, c):
             class_name='models.styleganxl.training.networks_stylegan3_resetting.Generator',
             channel_base=opts.cbase * 2,
             channel_max=opts.cmax*2,
-            magnitude_ema_beta=0.5 ** (opts.batch_size / (20 * 1e3)),
+            magnitude_ema_beta=0.5 ** (c.batch_size / (20 * 1e3)),
             conv_kernel=1 if opts.cfg == 'stylegan3-r' else 3,
             use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
         )
