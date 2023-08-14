@@ -487,7 +487,7 @@ class ConditionalMetrics():
             split.save(cache_file)
         self.splits[name] = split
 
-    def add_metric(self, metric):
+    def add_metric(self, metric, **kwargs):
         assert is_valid_metric(metric)
         metric_info = _metric_dict[metric]
         metric_fct = metric_info['metric_fct'](self.splits[metric_info['split_name']], **metric_info['kwargs'])

@@ -207,7 +207,8 @@ def training_loop(
     # Construct networks.
     if rank == 0:
         print('Constructing networks...')
-    common_kwargs = dict(c_dim=0, img_resolution=training_set[0].resolution, img_channels=training_set[0].num_channels)
+    model_res = downsample_res if downsample_res > 0 else training_set[0].resolution
+    common_kwargs = dict(c_dim=0, img_resolution=model_res, img_channels=training_set[0].num_channels)
     #G = dnnlib.util.construct_class_by_name(**G_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
     G = SetGAN(G_kwargs).train().requires_grad_(False).to(device)
     G_ema = copy.deepcopy(G).eval()
@@ -562,7 +563,7 @@ def training_loop(
                 print('Evaluating metrics...')
             for metric in all_metrics.metrics:
                 result_dict = all_metrics.calc_metric(metric=metric, G=snapshot_data['G_ema'],
-                                                        dataset_kwargs=dataset_kwargs, num_gpus=num_gpus, rank=rank, device=device)
+                                                        dataset_kwargs=dataset_kwargs, num_gpus=num_gpus, rank=rank, device=device, downsample_res=downsample_res)
                 if rank == 0:
                     all_metrics.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=snapshot_pkl)
                 stats_metrics.update(result_dict.results)

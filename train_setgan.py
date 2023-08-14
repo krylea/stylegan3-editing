@@ -198,6 +198,12 @@ def init_setgan_args(opts, c):
             conv_kernel=1 if opts.cfg == 'stylegan3-r' else 3,
             use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
         )
+    c.G_kwargs.decoder_kwargs.w_dim = 512
+    c.G_kwargs.decoder_kwargs.z_dim = 64
+    c.G_kwargs.decoder_kwargs.mapping_kwargs={}
+    c.G_kwargs.decoder_kwargs.mapping_kwargs.rand_embedding = False
+    c.G_kwargs.decoder_kwargs.num_layers = opts.syn_layers
+    c.G_kwargs.decoder_kwargs.mapping_kwargs.num_layers = 2
 
     if c.use_pretrained:
         c.G_kwargs.encoder_ckpt = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
@@ -231,6 +237,12 @@ def init_setgan_args(opts, c):
     c.loss_kwargs.cls_weight = 0.0  # use classifier guidance only for superresolution training (i.e., with pretrained stem)
     c.loss_kwargs.cls_model = 'deit_small_distilled_patch16_224'
     c.loss_kwargs.train_head_only = False
+    
+    if opts.encoder_res > 0:
+        assert opts.encoder_res > opts.resolution
+        c.downsample_res = opts.resolution
+        c.resolution = opts.encoder_res
+        c.dataset_kwargs.resolution = opts.encoder_res
 
 def init_sgxl_args(opts, c):
     c.dataset_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
@@ -362,7 +374,7 @@ def init_sgxl_args(opts, c):
 @click.option('--freeze_encoder', is_flag=True)
 @click.option('--freeze_decoder', is_flag=True)
 @click.option('--use_pretrained', is_flag=True)
-@click.option('--model_resolution', type=int, default=-1)
+@click.option('--encoder_res', type=int, default=-1)
 
 def main(**kwargs):
     # Initialize config.
