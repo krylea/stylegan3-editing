@@ -168,7 +168,7 @@ def init_setgan_args(opts, c):
         c.G_kwargs.encoder_type='ResNetProgressiveBackboneEncoder'
         c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
             class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ResNetProgressiveBackboneEncoder',
-            input_nc=opts.input_nc,
+            input_nc=c.G_kwargs.input_nc,
             n_styles=c.G_kwargs.n_styles 
         )
     else:
@@ -177,7 +177,7 @@ def init_setgan_args(opts, c):
             class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ProgressiveBackboneEncoder',
             num_layers=50,
             mode='ir_se',
-            input_nc=opts.input_nc,
+            input_nc=c.G_kwargs.input_nc,
             n_styles=c.G_kwargs.n_styles 
         )
     
