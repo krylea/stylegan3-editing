@@ -145,7 +145,7 @@ def parse_comma_separated_list(s):
 #----------------------------------------------------------------------------
 
 def init_setgan_args(opts, c):
-    assert opts.encoder_resolution >= opts.resolution
+    assert opts.encoder_res >= opts.resolution
 
     c.dataset_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
 
