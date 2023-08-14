@@ -166,7 +166,7 @@ class SetGAN(nn.Module):
         bs, rs = x.size()[:2]
         cs = s.size(1)
 
-        '''
+        
 
         codes = self.encoder(to_images(x))
         codes = codes - self.latent_avg.repeat(codes.shape[0], 1, 1).to(codes.device)
@@ -181,8 +181,8 @@ class SetGAN(nn.Module):
         transformed_codes = self.style_attn(codes, style_latents)
         transformed_codes = transformed_codes + self.latent_avg.repeat(*transformed_codes.size()[:2], 1, 1).to(transformed_codes.device)
         decoder_inputs = transformed_codes.view(-1, *transformed_codes.size()[2:])
-        '''
-        decoder_inputs = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
+        
+        #decoder_inputs = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
 
         # generate the aligned images
         '''
