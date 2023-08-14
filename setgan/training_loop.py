@@ -317,6 +317,7 @@ def training_loop(
             # Generate reference sets (assuming set size of 5 for now)
             N = len(validation_set)
             sample_refs, = validation_set_generator(N, set_sizes=(5,), class_id=torch.arange(N))
+            sample_refs = (sample_refs.to(torch.float32) / 127.5 - 1)
 
             # Getting grid information and labels
             #grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
