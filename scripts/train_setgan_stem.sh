@@ -50,7 +50,7 @@ argstring="$argstring \
 --candidate_size 1 4 \
 --attn_layers 2 \
 --exp_name $EXP_NAME \
---restyle_mode encoder \
+--restyle_mode none \
 --restyle_iters 1 \
 --step_interval 200 \
 --encoder_res 256 \

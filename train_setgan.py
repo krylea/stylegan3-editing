@@ -153,7 +153,7 @@ def init_setgan_args(opts, c):
     c.G_kwargs = dnnlib.EasyDict()
     c.G_kwargs.n_styles = opts.n_styles if opts.n_styles is not None else opts.syn_layers+2
     c.G_kwargs.latent = opts.latent
-    c.G_kwargs.input_nc = opts.input_nc
+    c.G_kwargs.input_nc = 3 if opts.restyle_mode == 'none' else 6
     c.G_kwargs.n_heads = opts.n_heads
     c.G_kwargs.attn_layers = opts.attn_layers
     c.G_kwargs.use_set_decoder = opts.use_set_decoder
