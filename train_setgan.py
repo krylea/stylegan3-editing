@@ -167,14 +167,14 @@ def init_setgan_args(opts, c):
     if opts.dataset_name == 'imagenet':
         c.G_kwargs.encoder_type='ResNetProgressiveBackboneEncoder'
         c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
-            class_name='setgan.encoder.encoders.restyle_e4e_encoders.ResNetProgressiveBackboneEncoder',
+            class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ResNetProgressiveBackboneEncoder',
             input_nc=opts.input_nc,
             n_styles=opts.n_styles
         )
     else:
         c.G_kwargs.encoder_type='ProgressiveBackboneEncoder'
         c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
-            class_name='setgan.encoder.encoders.restyle_e4e_encoders.ProgressiveBackboneEncoder',
+            class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ProgressiveBackboneEncoder',
             num_layers=50,
             mode='ir_se',
             input_nc=opts.input_nc,
