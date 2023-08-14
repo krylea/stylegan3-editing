@@ -60,12 +60,13 @@ class SetGAN(nn.Module):
         super(SetGAN, self).__init__()
         self.opts=opts
         # Define architecture
-        self.n_styles = opts.n_styles
+        #self.n_styles = opts.n_styles
         #self.encoder = self.set_encoder()
         #self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
-
-        self.encoder = dnnlib.util.construct_class_by_name(**opts.encoder_kwargs)
         self.decoder = dnnlib.util.construct_class_by_name(**opts.decoder_kwargs)
+        self.n_styles = self.decoder.num_ws
+        opts.encoder_kwargs.n_styles = self.n_styles
+        self.encoder = dnnlib.util.construct_class_by_name(**opts.encoder_kwargs)
 
         # Load weights if needed
         self.load_weights()

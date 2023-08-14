@@ -151,7 +151,7 @@ def init_setgan_args(opts, c):
 
     # Generator
     c.G_kwargs = dnnlib.EasyDict()
-    c.G_kwargs.n_styles = opts.n_styles
+    c.G_kwargs.n_styles = opts.n_styles if opts.n_styles is not None else opts.syn_layers+2
     c.G_kwargs.latent = opts.latent
     c.G_kwargs.input_nc = opts.input_nc
     c.G_kwargs.n_heads = opts.n_heads
@@ -169,7 +169,7 @@ def init_setgan_args(opts, c):
         c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
             class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ResNetProgressiveBackboneEncoder',
             input_nc=opts.input_nc,
-            n_styles=opts.n_styles
+            n_styles=c.G_kwargs.n_styles 
         )
     else:
         c.G_kwargs.encoder_type='ProgressiveBackboneEncoder'
@@ -178,7 +178,7 @@ def init_setgan_args(opts, c):
             num_layers=50,
             mode='ir_se',
             input_nc=opts.input_nc,
-            n_styles=opts.n_styles
+            n_styles=c.G_kwargs.n_styles 
         )
     
 
@@ -356,7 +356,7 @@ def init_sgxl_args(opts, c):
 # SetGAN
 @click.option('--input_nc', type=int, default=3)
 @click.option('--latent', type=int, default=512)
-@click.option('--n_styles', type=int, default=18)
+@click.option('--n_styles', type=int, default=None)
 @click.option('--n_heads', type=int, default=8)
 @click.option('--attn_layers', type=int, default=4)
 @click.option('--use_set_decoder', is_flag=True)

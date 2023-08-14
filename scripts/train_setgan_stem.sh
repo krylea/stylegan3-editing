@@ -46,7 +46,6 @@ fi
 
 argstring="$argstring \
 --input_nc 6 \
---n_styles 18 \
 --reference_size 4 7 \
 --candidate_size 1 4 \
 --attn_layers 2 \
