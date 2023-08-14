@@ -189,7 +189,7 @@ class SetGAN(nn.Module):
         '''
 
         if return_latents:
-            return images, transformed_codes
+            return images, decoder_inputs
         else:
             return images
 
