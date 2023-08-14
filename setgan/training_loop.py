@@ -88,7 +88,7 @@ def save_image_grid(reference_img, generated_img, fname, drange, downsample_res=
 
     if downsample_res > 0:
         downsample = Interpolate(downsample_res)
-        reference_img = to_imgset(downsample(to_images(reference_img)))
+        reference_img = to_imgset(downsample(to_images(reference_img)), initial_set=reference_img)
 
     # handle reference_img
     reference_img = np.asarray(reference_img, dtype=np.float32)

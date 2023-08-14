@@ -319,6 +319,7 @@ class Split():
         for cl in tqdm(range(self.num_classes)):
             reference_set = self.reference_sets[cl]
             reference_set = torch.stack([torch.tensor(x) for x in reference_set], dim=0).unsqueeze(0).to(opts.device)
+            reference_set = reference_set.to(torch.float32) / 127.5 - 1
 
             self._class_feature_stats_for_generator(
                 stats           = all_stats[cl],
@@ -487,7 +488,7 @@ class ConditionalMetrics():
             split.save(cache_file)
         self.splits[name] = split
 
-    def add_metric(self, metric, **kwargs):
+    def add_metric(self, metric):
         assert is_valid_metric(metric)
         metric_info = _metric_dict[metric]
         metric_fct = metric_info['metric_fct'](self.splits[metric_info['split_name']], **metric_info['kwargs'])
