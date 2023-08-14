@@ -141,7 +141,7 @@ class SetGAN(nn.Module):
         if transform is not None:
             self.decoder.synthesis.input.transform = transform
         images = self.decoder.synthesis(x, noise_mode='const', force_fp32=True, **kwargs)
-        if resize:
+        if False:
             images = self.face_pool(images)
         return images
 
