@@ -205,7 +205,7 @@ def init_setgan_args(opts, c):
     c.G_kwargs.decoder_kwargs.num_layers = opts.syn_layers
     c.G_kwargs.decoder_kwargs.mapping_kwargs.num_layers = 2
 
-    if c.use_pretrained:
+    if opts.use_pretrained:
         c.G_kwargs.encoder_ckpt = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
         c.G_kwargs.decoder_ckpt = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
     else:
