@@ -39,7 +39,7 @@ class Loss:
 class ProjectedSetGANLoss(Loss):
     def __init__(self, device, G, D, G_ema, blur_init_sigma=0, blur_fade_kimg=0,
                  train_head_only=False, style_mixing_prob=0.0, pl_weight=0.0,
-                 cls_model='efficientnet_b1', cls_weight=0.0, **kwargs):
+                 cls_model='efficientnet_b1', cls_weight=0.0, downsample_res=-1, **kwargs):
         super().__init__()
         self.device = device
         self.G = G
@@ -65,6 +65,10 @@ class ProjectedSetGANLoss(Loss):
         self.cls_weight = cls_weight
         self.cls_guidance_loss = torch.nn.CrossEntropyLoss()
 
+        self.downsample_res = downsample_res
+        if downsample_res > 0:
+            self.downsample = Interpolate(downsample_res)
+
     '''
     def run_G(self, z, c, update_emas=False):
         ws = self.G.mapping(z, c, update_emas=update_emas)
@@ -81,15 +85,19 @@ class ProjectedSetGANLoss(Loss):
 
     def run_D(self, reference_set, imgs, blur_sigma=0, update_emas=False):
         blur_size = np.floor(blur_sigma * 3)
+        ref_flat = to_images(reference_set)
+        imgs_flat = to_images(imgs)
         if blur_size > 0:
-            ref_flat = to_images(reference_set)
-            imgs_flat = to_images(imgs)
             with torch.autograd.profiler.record_function('blur'):
                 f = torch.arange(-blur_size, blur_size + 1, device=imgs.device).div(blur_sigma).square().neg().exp2()
                 imgs_flat = upfirdn2d.filter2d(imgs_flat, f / f.sum())
                 ref_flat = upfirdn2d.filter2d(ref_flat, f / f.sum())
-            reference_set = to_imgset(ref_flat, initial_set=reference_set)
-            imgs = to_imgset(imgs_flat, initial_set=imgs)
+        if self.downsample_res > 0:
+            ref_flat = self.downsample(ref_flat)
+            if imgs_flat.size(1) > self.downsample_res:
+                imgs_flat = self.downsample(imgs_flat)
+        reference_set = to_imgset(ref_flat, initial_set=reference_set)
+        imgs = to_imgset(imgs_flat, initial_set=imgs)
 
         return self.D(reference_set, imgs)
        

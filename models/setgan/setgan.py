@@ -3,9 +3,11 @@ from torch import nn
 import os
 
 from configs.paths_config import model_paths
-from inversion.models.encoders import restyle_e4e_encoders
+from setgan.encoder.encoders import restyle_e4e_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
+
+import models.styleganxl.dnnlib as dnnlib
 
 from models.setgan.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
@@ -13,6 +15,7 @@ from models.styleganxl.training.networks_stylegan3_resetting import SuperresGene
 from setgan.utils import to_images, to_imgset, to_set
 from models.setgan.restyle import Restyle
 
+import pickle
 
 class StyleAttention(nn.Module):
     def __init__(self, opts):
@@ -58,8 +61,12 @@ class SetGAN(nn.Module):
         self.set_opts(opts)
         # Define architecture
         self.n_styles = opts.n_styles
-        self.encoder = self.set_encoder()
-        self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
+        #self.encoder = self.set_encoder()
+        #self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
+
+        self.encoder = dnnlib.util.construct_class_by_name(**opts.encoder_kwargs)
+        self.decoder = dnnlib.util.construct_class_by_name(**opts.decoder_kwargs)
+
         # Load weights if needed
         self.load_weights()
 
@@ -93,19 +100,28 @@ class SetGAN(nn.Module):
             self.encoder.latent_avg = self.latent_avg
             self.encoder.avg_image = self.avg_image
 
-    def set_decoder(self):
-        pass
-
-    def set_encoder(self):
-        if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
-            encoder = restyle_e4e_encoders.ProgressiveBackboneEncoder(50, 'ir_se', self.n_styles, self.opts)
-        elif self.opts.encoder_type == 'ResNetProgressiveBackboneEncoder':
-            encoder = restyle_e4e_encoders.ResNetProgressiveBackboneEncoder(self.n_styles, self.opts)
-        else:
-            raise Exception(f'{self.opts.encoder_type} is not a valid encoders')
-        return encoder
-
     def load_weights(self):
+        if self.opts.encoder_ckpt is not None:
+            encoder_ckpt = torch.load(self.opts.encoder_ckpt, map_location='cpu')
+            self.encoder.load_state_dict(self._get_keys(encoder_ckpt, 'encoder'), strict=True)
+        else:
+            if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
+                print('Loading encoders weights from irse50!')
+                encoder_ckpt = torch.load(model_paths['ir_se50'])
+                # Transfer the RGB input of the irse50 network to the first 3 input channels of pSp's encoder
+                if self.opts.encoder_kwargs.input_nc != 3:
+                    shape = encoder_ckpt['input_layer.0.weight'].shape
+                    altered_input_layer = torch.randn(shape[0], self.opts.encoder_kwargs.input_nc, shape[2], shape[3], dtype=torch.float32)
+                    altered_input_layer[:, :3, :, :] = encoder_ckpt['input_layer.0.weight']
+                    encoder_ckpt['input_layer.0.weight'] = altered_input_layer
+        
+        if self.opts.decoder_ckpt is not None:
+            print(f"Loading StyleGAN3 generator from path: {self.opts.decoder_ckpt}")
+            with open(self.opts.decoder_ckpt, "rb") as f:
+                self.decoder = pickle.load(f)['G_ema'].cuda()
+            print('Done!')
+                               
+        '''
         if self.opts.checkpoint_path is not None and os.path.exists(self.opts.checkpoint_path):
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
@@ -118,6 +134,7 @@ class SetGAN(nn.Module):
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
             self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
             #self.latent_avg = self.decoder.mapping.w_avg.cpu()
+        '''
 
     def decode(self, x, transform=None, resize=True, **kwargs):
         if transform is not None:
@@ -149,6 +166,8 @@ class SetGAN(nn.Module):
         bs, rs = x.size()[:2]
         cs = s.size(1)
 
+        '''
+
         codes = self.encoder(to_images(x))
         codes = codes - self.latent_avg.repeat(codes.shape[0], 1, 1).to(codes.device)
         codes = codes.view(bs, rs, *codes.size()[1:])
@@ -162,6 +181,8 @@ class SetGAN(nn.Module):
         transformed_codes = self.style_attn(codes, style_latents)
         transformed_codes = transformed_codes + self.latent_avg.repeat(*transformed_codes.size()[:2], 1, 1).to(transformed_codes.device)
         decoder_inputs = transformed_codes.view(-1, *transformed_codes.size()[2:])
+        '''
+        decoder_inputs = self.decoder.mapping(s.view(-1, s.size(-1)), None, update_emas=update_emas)
 
         # generate the aligned images
         '''
@@ -189,7 +210,8 @@ class SetGAN(nn.Module):
             return images, transformed_codes
         else:
             return images
-
+        
+    '''
     def set_opts(self, opts):
         self.opts = opts
 
@@ -211,6 +233,7 @@ class SetGAN(nn.Module):
             altered_input_layer[:, :3, :, :] = encoder_ckpt['input_layer.0.weight']
             encoder_ckpt['input_layer.0.weight'] = altered_input_layer
         return encoder_ckpt
+    '''
 
     @staticmethod
     def _get_keys(d, name, remove=[]):

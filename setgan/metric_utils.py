@@ -16,6 +16,7 @@ from models.styleganxl.pg_modules.projector import F_RandomProj
 from pathlib import Path
 import dill
 from models.styleganxl.torch_utils import gen_utils
+from models.styleganxl.pg_modules.blocks import Interpolate
 import setgan.safe_dataset
 
 from torch.utils.data import Subset
@@ -81,7 +82,7 @@ def getActivation(name):
 #----------------------------------------------------------------------------
 
 class MetricOptions:
-    def __init__(self, G=None, G_kwargs={}, dataset_kwargs={}, num_gpus=1, rank=0, device=None, progress=None, cache=True, feature_network=None):
+    def __init__(self, G=None, G_kwargs={}, dataset_kwargs={}, num_gpus=1, rank=0, device=None, progress=None, cache=True, feature_network=None, downsample_res=-1):
         assert 0 <= rank < num_gpus
         self.G              = G
         self.G_kwargs       = dnnlib.EasyDict(G_kwargs)
@@ -92,6 +93,7 @@ class MetricOptions:
         self.progress       = progress.sub() if progress is not None and rank == 0 else ProgressMonitor()
         self.cache          = cache
         self.feature_network = feature_network
+        self.downsample_res = downsample_res
 
 #----------------------------------------------------------------------------
 
@@ -342,9 +344,15 @@ class Split():
             random.shuffle(item_subset)
             item_subset = item_subset[:shuffle_size]
 
+        if opts.downsample_res > 0:
+            downsample = Interpolate(opts.downsample_res)
+
         for images in torch.utils.data.DataLoader(dataset=dataset, sampler=item_subset, batch_size=batch_size, **data_loader_kwargs):
             if images.shape[1] == 1:
                 images = images.repeat([1, 3, 1, 1])
+
+            if opts.downsample_res > 0:
+                images = downsample(images)
 
             with torch.no_grad():
                 if opts.feature_network is None:

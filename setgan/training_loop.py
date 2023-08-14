@@ -24,6 +24,7 @@ from models.styleganxl.torch_utils import misc
 from models.styleganxl.torch_utils import training_stats
 from models.styleganxl.torch_utils.ops import conv2d_gradfix
 from models.styleganxl.torch_utils.ops import grid_sample_gradfix
+from models.styleganxl.pg_modules.blocks import Interpolate
 
 import models.styleganxl.legacy as legacy
 #from metrics import metric_main
@@ -32,6 +33,8 @@ import setgan.safe_dataset as safe_dataset
 
 from setgan.dataset import ImageMultiSetGenerator, ImagesDataset, build_datasets
 from models.setgan.setgan import SetGAN
+
+from setgan.utils import to_images, to_imgset
 
 from setgan.metric_utils import ConditionalMetrics
 
@@ -80,8 +83,12 @@ def setup_snapshot_image_grid(training_set, random_seed=0, gw=None, gh=None):
 
 #----------------------------------------------------------------------------
 
-def save_image_grid(reference_img, generated_img, fname, drange):
+def save_image_grid(reference_img, generated_img, fname, drange, downsample_res=-1):
     lo, hi = drange
+
+    if downsample_res > 0:
+        downsample = Interpolate(downsample_res)
+        reference_img = to_imgset(downsample(to_images(reference_img)))
 
     # handle reference_img
     reference_img = np.asarray(reference_img, dtype=np.float32)
@@ -158,7 +165,8 @@ def training_loop(
     reference_size          = (7,12),
     candidate_size          = (1,4),
     eval_metric             = 'fid-agg',
-    step_interval           = STEP_INTERVAL
+    step_interval           = STEP_INTERVAL,
+    downsample_res          = -1
 ):
     # Initialize.
     start_time = time.time()
@@ -295,8 +303,6 @@ def training_loop(
             phase.end_event = torch.cuda.Event(enable_timing=True)
 
     # Export sample images.
-
-    
     if rank == 0:
         print('Exporting sample images...')
 
@@ -321,7 +327,7 @@ def training_loop(
             generated_images = torch.cat(generated_images, dim=0)
 
             samples_path_init = os.path.join(run_dir, "fakes_init.png")
-            save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1])
+            save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1], downsample_res=downsample_res)
 
             torch.save({
                 'reference_set': sample_refs,
@@ -503,7 +509,8 @@ def training_loop(
         if (rank == 0) and (image_snapshot_ticks is not None) and (done or cur_tick % image_snapshot_ticks == 0):
             generated_images = [G_ema(ref_set.to(device), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
             generated_images = torch.cat(generated_images, dim=0)
-            save_image_grid(sample_refs, generated_images, os.path.join(run_dir, f'fakes{cur_nimg//step_interval:06d}.png'), drange=[-1,1])
+            save_image_grid(sample_refs, generated_images, os.path.join(run_dir, f'fakes{cur_nimg//step_interval:06d}.png'), 
+                            drange=[-1,1], downsample_res=downsample_res)
 
         # Save network snapshot.
         snapshot_pkl = None
