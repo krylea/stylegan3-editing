@@ -200,7 +200,7 @@ def init_setgan_args(opts, c):
         )
     c.G_kwargs.decoder_kwargs.w_dim = 512
     c.G_kwargs.decoder_kwargs.z_dim = 64
-    c.G_kwargs.decoder_kwargs.mapping_kwargs={}
+    c.G_kwargs.decoder_kwargs.mapping_kwargs=dnnlib.EasyDict()
     c.G_kwargs.decoder_kwargs.mapping_kwargs.rand_embedding = False
     c.G_kwargs.decoder_kwargs.num_layers = opts.syn_layers
     c.G_kwargs.decoder_kwargs.mapping_kwargs.num_layers = 2
