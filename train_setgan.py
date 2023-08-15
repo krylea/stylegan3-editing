@@ -189,6 +189,7 @@ def init_setgan_args(opts, c):
             head_layers=opts.head_layers,
             up_factor=opts.up_factor,
         )
+        c.G_kwargs.path_stem = opts.path_stem
     else:
         c.G_kwargs.decoder_kwargs = dnnlib.EasyDict(
             class_name='models.styleganxl.training.networks_stylegan3_resetting.Generator',

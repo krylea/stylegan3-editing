@@ -8,6 +8,8 @@ from models.stylegan3.model import SG3Generator
 from utils import common
 
 import models.styleganxl.dnnlib as dnnlib
+import models.styleganxl.legacy as legacy
+from models.styleganxl.torch_utils import misc
 
 from models.setgan.set import SetTransformerDecoder
 from models.stylegan3.networks_stylegan3 import FullyConnectedLayer
@@ -68,11 +70,20 @@ class SetGAN(nn.Module):
         opts.encoder_kwargs.n_styles = self.n_styles
         self.encoder = dnnlib.util.construct_class_by_name(**opts.encoder_kwargs)
 
-        # Load weights if needed
-        self.load_weights()
-
         self.opts.style_dim = self.decoder.w_dim
         self.style_attn = StyleAttention(opts)
+
+        # Load weights if needed
+
+        if opts.path_stem is not None:
+            with dnnlib.util.open_url(self.path_stem) as f:
+                G_stem = legacy.load_network_pkl(f)['G_ema']
+            misc.copy_params_and_buffers(G_stem.encoder, self.encoder, require_all=False)
+            misc.copy_params_and_buffers(G_stem.style_attn, self.style_attn, require_all=False)
+        else:
+            self.load_weights()
+
+
 
         if True:
             for parameter in self.decoder.mapping.parameters():
