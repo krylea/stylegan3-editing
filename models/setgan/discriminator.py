@@ -102,7 +102,8 @@ class MultiScaleD(nn.Module):
             'decoder_layers': 0,
             'weight_sharing': 'none',
             'ln': True,
-            'dropout': 0
+            'dropout': 0,
+            'pooling': 'mean'
         })
 
         mini_discs = []
@@ -137,8 +138,8 @@ class MultiScaleD(nn.Module):
             #print(x_enc.size())
             x_enc = to_set(x_enc, initial_set=x_features[k])
             r_enc = to_set(r_enc, initial_set=r_features[k])
-            #logits = set(r_enc, x_enc)
-            logits = x_enc.mean(dim=2, keepdim=True).mean(dim=1)
+            logits = set(r_enc, x_enc)
+            #logits = x_enc.mean(dim=2, keepdim=True).mean(dim=1)
             all_logits.append(logits)
 
         all_logits = torch.cat(all_logits, dim=1)
@@ -148,6 +149,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
     def __init__(
         self,
         backbones,
+        latent_size=512,
         diffaug=True,
         interp224=True,
         backbone_kwargs={},
@@ -171,6 +173,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
                 resolutions=feat.RESOLUTIONS,
                 output_res=backbone_res[bb_name],
                 set_kwargs=set_kwargs,
+                latent_size=latent_size,
                 **backbone_kwargs,
             )
 

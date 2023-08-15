@@ -227,6 +227,7 @@ def init_sgxl_args(opts, c):
         class_name='models.styleganxl.pg_modules.discriminator.ProjectedDiscriminator',
         backbones=['deit_base_distilled_patch16_224', 'tf_efficientnet_lite0'],
         diffaug=True,
+        latent_size=opts.latent,
         interp224=(c.dataset_kwargs.resolution < 224),
         backbone_kwargs=dnnlib.EasyDict(),
     )
