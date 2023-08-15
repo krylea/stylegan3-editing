@@ -3,16 +3,27 @@ import torch
 import time
 class TimingUtil():
     def __init__(self):
-        self.events={}
+        self.events = {}
+        self.event_list = []
 
         self.t = None
         self.counter=None
         self.cycles=0
 
+        self.start_time = None
+        self.end_time = None
+        self.cycle_times=[]
+
     def start(self):
-        self.t = time.time()
+        self.start_time = time.time()
+        self.end_time = None
+        self.t = self.start_t
         self.counter=0
+
+    def end(self):
+        self.end_time = time.time()
         self.cycles += 1
+        self.cycle_times.append(self.end_time - self.start_time)
 
     def reset(self):
         self.events={}
@@ -20,6 +31,10 @@ class TimingUtil():
         self.t = None
         self.counter=None
         self.cycles=0
+
+        self.start_time = None
+        self.end_time = None
+        self.cycle_times=[]
 
     def tick(self, event_name=None):
         t = time.time()
@@ -30,21 +45,29 @@ class TimingUtil():
             self.events[event_name] = {
                 'name': event_name,
                 'idx': self.counter,
-                't': []
+                'raw_t': [],
+                'dt': []
             }
+            self.event_list.append(event_name)
         
-        self.events[event_name]['t'].append(t - self.t)
+        self.events[event_name]['raw_t'].append(t)
+        self.events[event_name]['dt'].append(t - self.t)
         self.t = t
         self.counter += 1
 
     def report_times(self):
         for k, v in self.events.items():
-            t_avg = sum(v['t']) / len(v['t'])
-            self.events[k]['t_avg'] = t_avg
+            dt_avg = sum(v['dt']) / len(v['dt'])
+            self.events[k]['dt_avg'] = dt_avg
         
         print("Average Times over %d cycles:" % self.cycles)
         for k, v in self.events.items():
-            print("\t%s: %f seconds." % (v['name'], v['t_avg']))
+            print("\t%s: %.2f seconds." % (v['name'], v['dt_avg']))
+
+        cyc_avg = sum(self.cycle_times) / len(self.cycle_times)
+        print("Average Time per cycle over %d cycles: %.2f" % (self.cycles, cyc_avg))
+
+        
 
 
 

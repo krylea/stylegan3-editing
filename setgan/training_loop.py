@@ -463,6 +463,7 @@ def training_loop(
             augment_pipe.p.copy_((augment_pipe.p + adjust).max(misc.constant(0, device=device)))
 
         timer.tick("updates")
+        timer.end()
 
         # Perform maintenance tasks once per tick.
         done = (cur_nimg >= total_kimg * step_interval)
