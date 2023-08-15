@@ -493,6 +493,7 @@ def training_loop(
 
         if rank == 0:
             timer.report_times()
+            timer.reset()
 
         # Check for abort.
         if (not done) and (abort_fn is not None) and abort_fn():

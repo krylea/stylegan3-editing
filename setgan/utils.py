@@ -3,7 +3,6 @@ import torch
 import time
 class TimingUtil():
     def __init__(self):
-        self.event_list=[]
         self.events={}
 
         self.t = None
@@ -14,6 +13,13 @@ class TimingUtil():
         self.t = time.time()
         self.counter=0
         self.cycles += 1
+
+    def reset(self):
+        self.events={}
+
+        self.t = None
+        self.counter=None
+        self.cycles=0
 
     def tick(self, event_name=None):
         t = time.time()
