@@ -50,7 +50,8 @@ argstring="$argstring \
 --n_styles 18 \
 --reference_size 4 7 \
 --candidate_size 1 4 \
---attn_layers 2 \
+--gen_attn_layers 2 \
+--disc_attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
 --restyle_iters 1 \
