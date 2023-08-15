@@ -375,15 +375,19 @@ def training_loop(
         augment_pipe.p.copy_(augment_p)
     if hasattr(loss, 'pl_mean'):
         loss.pl_mean.copy_(__PL_MEAN__)
+
+    from setgan.utils import TimingUtil
+    timer=TimingUtil()
     while True:
+        timer.start()
         torch.cuda.empty_cache()
         with torch.autograd.profiler.record_function('data_fetch'):
             reference_samples = torch.randint(*reference_size, (1,))
             candidate_samples = torch.randint(*candidate_size, (1,))
-            #reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+            reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
 
-            reference_set = torch.randint(0, 255, (batch_size, reference_samples, 3, training_set[0].resolution, training_set[0].resolution))
-            candidate_set = torch.randint(0, 255, (batch_size, candidate_samples, 3, training_set[0].resolution, training_set[0].resolution))
+            #reference_set = torch.randint(0, 255, (batch_size, reference_samples, 3, training_set[0].resolution, training_set[0].resolution))
+            #candidate_set = torch.randint(0, 255, (batch_size, candidate_samples, 3, training_set[0].resolution, training_set[0].resolution))
 
             # save reference set
             #save_image_grid(reference_set, os.path.join(run_dir, 'reference.png'), drange=[0,255], grid_size=grid_size)
@@ -397,7 +401,7 @@ def training_loop(
             #all_gen_c = [training_set.get_label(np.random.randint(len(training_set))) for _ in range(len(phases) * batch_size)]
             #all_gen_c = torch.from_numpy(np.stack(all_gen_c)).pin_memory().to(device)
             #all_gen_c = [phase_gen_c.split(batch_gpu) for phase_gen_c in all_gen_c.split(batch_size)]
-
+        timer.tick("data")
         # Execute training phases.
         for phase, phase_gen_s in zip(phases, all_gen_s):
             if batch_idx % phase.interval != 0:
@@ -434,6 +438,8 @@ def training_loop(
             # Phase done.
             if phase.end_event is not None:
                 phase.end_event.record(torch.cuda.current_stream(device))
+            
+            timer.tick(phase.name)
 
         # Update G_ema.
         with torch.autograd.profiler.record_function('Gema'):
@@ -455,6 +461,8 @@ def training_loop(
             ada_stats.update()
             adjust = np.sign(ada_stats['Loss/signs/real'] - ada_target) * (batch_size * ada_interval) / (ada_kimg * step_interval)
             augment_pipe.p.copy_((augment_pipe.p + adjust).max(misc.constant(0, device=device)))
+
+        timer.tick("updates")
 
         # Perform maintenance tasks once per tick.
         done = (cur_nimg >= total_kimg * step_interval)
@@ -482,6 +490,9 @@ def training_loop(
         training_stats.report0('Timing/total_days', (tick_end_time - start_time) / (24 * 60 * 60))
         if rank == 0:
             print(' '.join(fields))
+
+        if rank == 0:
+            timer.report_times()
 
         # Check for abort.
         if (not done) and (abort_fn is not None) and abort_fn():

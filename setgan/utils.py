@@ -1,5 +1,49 @@
 import torch
 
+import time
+class TimingUtil():
+    def __init__(self):
+        self.event_list=[]
+        self.events={}
+
+        self.t = None
+        self.counter=None
+        self.cycles=0
+
+    def start(self):
+        self.t = time.time()
+        self.counter=0
+        self.cycles += 1
+
+    def tick(self, event_name=None):
+        t = time.time()
+        if event_name is None:
+            event_name = str(self.counter)
+        
+        if event_name not in self.events:
+            self.events[event_name] = {
+                'name': event_name,
+                'idx': self.counter,
+                't': []
+            }
+        
+        self.events[event_name][t].append(t - self.t)
+        self.t = t
+        self.counter += 1
+
+    def report_times(self):
+        for k, v in self.events.items():
+            t_avg = sum(v['t']) / len(v['t'])
+            self.events[k]['t_avg'] = t_avg
+        
+        print("Average Times over %d cycles:" % self.cycles)
+        for k, v in self.events.items():
+            print("\t%s: %f seconds." % (v['name'], v['t_avg']))
+
+
+
+
+
 
 def masked_softmax(x, mask, dim=-1, eps=1e-8):
     x_masked = x.clone()
