@@ -3,12 +3,12 @@
 #SBATCH --output=logs/slurm-%j.txt
 #SBATCH --open-mode=append
 #SBATCH --ntasks=1
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:1
 #SBATCH --partition=a40
 #SBATCH --cpus-per-gpu=1
 #SBATCH --mem=50GB
 
-BATCH_PER_GPU=2
+BATCH_PER_GPU=4
 
 RES=$1
 DATASET_NAME=$2
@@ -48,14 +48,15 @@ argstring="$argstring \
 --encoder_type ProgressiveBackboneEncoder \
 --input_nc 6 \
 --n_styles 18 \
---reference_size 4 7 \
---candidate_size 1 4 \
+--reference_size 1 2 \
+--candidate_size 1 2 \
+--latent 128 \
 --gen_attn_layers 2 \
 --disc_attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
 --restyle_iters 1 \
---step_interval 200 \
+--step_interval 100 \
 --freeze_encoder \
 --freeze_decoder \
 --use_setgan"
