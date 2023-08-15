@@ -119,12 +119,12 @@ class SetGAN(nn.Module):
             self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cpu()
             #self.latent_avg = self.decoder.mapping.w_avg.cpu()
 
-    def decode(self, x, transform=None, resize=True, **kwargs):
-        if transform is not None:
-            self.decoder.synthesis.input.transform = transform
-        images = self.decoder.synthesis(x, noise_mode='const', force_fp32=True, **kwargs)
-        if resize:
-            images = self.face_pool(images)
+    def decode(self, x, transform=None, resize=True, update_emas=False, **kwargs):
+        #if transform is not None:
+        #    self.decoder.synthesis.input.transform = transform
+        images = self.decoder.synthesis(x, update_emas=update_emas, **kwargs)
+        #if resize:
+        #    images = self.face_pool(images)
         return images
 
         
