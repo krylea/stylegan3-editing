@@ -389,7 +389,10 @@ def training_loop(
         with torch.autograd.profiler.record_function('data_fetch'):
             reference_samples = torch.randint(*reference_size, (1,))
             candidate_samples = torch.randint(*candidate_size, (1,))
-            reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+            #reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+
+            reference_set = torch.randint(0, 255, (batch_size, reference_samples, 3, training_set[0].resolution, training_set[0].resolution))
+            candidate_set = torch.randint(0, 255, (batch_size, candidate_samples, 3, model_res, model_res))
 
             # save reference set
             #save_image_grid(reference_set, os.path.join(run_dir, 'reference.png'), drange=[0,255], grid_size=grid_size)
