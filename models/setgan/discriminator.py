@@ -169,7 +169,7 @@ class ProjectedSetDiscriminator(torch.nn.Module):
                 channels=feat.CHANNELS,
                 resolutions=feat.RESOLUTIONS,
                 output_res=backbone_res[bb_name],
-                set_kwargs=set_kwargs
+                set_kwargs=set_kwargs,
                 **backbone_kwargs,
             )
 

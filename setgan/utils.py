@@ -26,6 +26,7 @@ class TimingUtil():
         self.cycle_times.append(self.end_time - self.start_time)
 
     def reset(self):
+        self.event_list = []
         self.events={}
 
         self.t = None
