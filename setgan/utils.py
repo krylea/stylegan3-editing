@@ -27,7 +27,7 @@ class TimingUtil():
                 't': []
             }
         
-        self.events[event_name][t].append(t - self.t)
+        self.events[event_name]['t'].append(t - self.t)
         self.t = t
         self.counter += 1
 
