@@ -234,9 +234,9 @@ class ImagesDataset(Dataset):
         if store_in_memory:
             self.dataset = [x for x in self]
 
-        test_img = self[0]
-        self.image_shape = test_img.shape
-        self.num_channels = self.image_shape[0]
+        #test_img = self[0]
+        #self.image_shape = test_img.shape
+        #self.num_channels = self.image_shape[0]
             
 
     def __len__(self):
