@@ -150,10 +150,10 @@ def init_setgan_args(opts, c):
     # Generator
     c.G_kwargs = dnnlib.EasyDict()
     c.G_kwargs.n_styles = opts.n_styles
-    c.G_kwargs.latent = opts.latent
+    c.G_kwargs.latent = opts.g_latent
     c.G_kwargs.input_nc = opts.input_nc
-    c.G_kwargs.n_heads = opts.gen_attn_heads
-    c.G_kwargs.attn_layers = opts.gen_attn_layers
+    c.G_kwargs.n_heads = opts.g_attn_heads
+    c.G_kwargs.attn_layers = opts.g_attn_layers
     c.G_kwargs.use_set_decoder = opts.use_set_decoder
     c.G_kwargs.disable_style_concat = opts.disable_style_concat
     c.G_kwargs.use_temperature = opts.use_temperature
@@ -175,9 +175,10 @@ def init_setgan_args(opts, c):
         interp224=(c.dataset_kwargs.resolution < 224),
         backbone_res={'deit_base_distilled_patch16_224':4, 'tf_efficientnet_lite0':5},
         backbone_kwargs=dnnlib.EasyDict(),
+        latent_size=opts.d_latent,
         set_kwargs=dnnlib.EasyDict(
-            num_blocks=opts.disc_attn_layers,
-            num_heads=opts.disc_attn_heads
+            num_blocks=opts.d_attn_layers,
+            num_heads=opts.d_attn_heads
         )
     )
     c.D_kwargs.backbone_kwargs.cout = 64
@@ -306,12 +307,13 @@ def init_sgxl_args(opts, c):
 
 # SetGAN
 @click.option('--input_nc', type=int, default=3)
-@click.option('--latent', type=int, default=512)
+@click.option('--g_latent', type=int, default=512)
+@click.option('--d_latent', type=int, default=512)
 @click.option('--n_styles', type=int, default=18)
-@click.option('--gen_attn_heads', type=int, default=8)
-@click.option('--disc_attn_heads', type=int, default=8)
-@click.option('--gen_attn_layers', type=int, default=4)
-@click.option('--disc_attn_layers', type=int, default=4)
+@click.option('--g_attn_heads', type=int, default=8)
+@click.option('--d_attn_heads', type=int, default=8)
+@click.option('--g_attn_layers', type=int, default=4)
+@click.option('--d_attn_layers', type=int, default=4)
 @click.option('--use_set_decoder', is_flag=True)
 @click.option('--disable_style_concat', is_flag=True)
 @click.option('--use_temperature', is_flag=True)

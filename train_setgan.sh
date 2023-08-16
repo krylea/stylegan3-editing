@@ -50,9 +50,10 @@ argstring="$argstring \
 --n_styles 18 \
 --reference_size 1 2 \
 --candidate_size 1 2 \
---latent 128 \
---gen_attn_layers 2 \
---disc_attn_layers 2 \
+--d_latent 128 \
+--g_latent 512 \
+--g_attn_layers 2 \
+--d_attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
 --restyle_iters 1 \
