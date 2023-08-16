@@ -234,9 +234,17 @@ class ImagesDataset(Dataset):
         if store_in_memory:
             self.dataset = [x for x in self]
 
-        #test_img = self[0]
-        #self.image_shape = test_img.shape
-        #self.num_channels = self.image_shape[0]
+        done=False
+        i=0
+        while not done:
+            try:
+                test_img = self[i]
+                self.image_shape = test_img.shape
+                self.num_channels = self.image_shape[0]
+                done=True
+            except:
+                i+=1
+                continue
             
 
     def __len__(self):
