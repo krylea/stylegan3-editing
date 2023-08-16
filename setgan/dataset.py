@@ -298,8 +298,9 @@ class ImagesDataset(Dataset):
         return img
 
 from setgan.configs import dataset_paths
-def load_imagenet(resolution):
-    return ImagesDataset.from_folders(dataset_paths['imagenet'], resolution)
+def load_imagenet(resolution, val_frac=0.1):
+    datasets = ImagesDataset.from_folders(dataset_paths['imagenet'], resolution)
+    return split_datasets(datasets, val_frac, randomize=False)
 
 def load_vggface(resolution):
     return ImagesDataset.from_folder_by_category(dataset_paths['face'], resolution)
