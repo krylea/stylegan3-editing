@@ -45,16 +45,20 @@ else
 fi
 
 argstring="$argstring \
---input_nc 6 \
---reference_size 4 7 \
---candidate_size 1 4 \
---attn_layers 2 \
+--input_nc 3 \
+--reference_size 1 2 \
+--candidate_size 1 2 \
+--d_latent 128 \
+--g_latent 512 \
+--g_attn_layers 2 \
+--d_attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode none \
 --restyle_iters 1 \
---step_interval 200 \
+--step_interval 100 \
 --encoder_res 256 \
 --use_setgan"
+
 
 if [[ -n $ckpt ]]
 then

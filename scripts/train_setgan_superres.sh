@@ -44,19 +44,21 @@ else
             --gpus=$SLURM_GPUS_ON_NODE --batch=$BATCH --mirror=1 --snap 10 \
             --batch-gpu $BATCH_PER_GPU --kimg 10000 --syn_layers 7 --workers $CPUS \
             --superres --up_factor 2 --head_layers 4 --cbase 16384 --cmax 256 --restart_every 36000 --resolution $RES \
-            --path_stem training-runs/$DATASET_NAME/$PREFIX-stylegan3-t-${DATASET_NAME}${PREV_RES}/best_model.pkl"
+            --path_stem training-runs/$DATASET_NAME/${EXP_NAME}_${PREV_RES}/best_model.pkl"
 fi
 
 argstring="$argstring \
---input_nc 6 \
---n_styles 18 \
---reference_size 4 7 \
---candidate_size 1 4 \
---attn_layers 2 \
+--input_nc 3 \
+--reference_size 1 2 \
+--candidate_size 1 2 \
+--d_latent 128 \
+--g_latent 512 \
+--g_attn_layers 2 \
+--d_attn_layers 2 \
 --exp_name $EXP_NAME \
 --restyle_mode none \
 --restyle_iters 1 \
---step_interval 200 \
+--step_interval 100 \
 --encoder_res 256 \
 --use_setgan"
 
