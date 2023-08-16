@@ -199,6 +199,7 @@ def init_setgan_args(opts, c):
             conv_kernel=1 if opts.cfg == 'stylegan3-r' else 3,
             use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
         )
+        c.G_kwargs.path_stem = None
     c.G_kwargs.decoder_kwargs.w_dim = 512
     c.G_kwargs.decoder_kwargs.z_dim = 64
     c.G_kwargs.decoder_kwargs.mapping_kwargs=dnnlib.EasyDict()
