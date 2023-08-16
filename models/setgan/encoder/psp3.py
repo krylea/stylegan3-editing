@@ -2,35 +2,35 @@ import torch
 from torch import nn
 
 from configs.paths_config import model_paths
-from inversion.models.encoders import restyle_e4e_encoders
+from setgan.encoder.encoders import restyle_psp_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
 
 
-class e4e(nn.Module):
+class pSp(nn.Module):
 
     def __init__(self, opts):
-        super(e4e, self).__init__()
+        super(pSp, self).__init__()
         self.set_opts(opts)
         # Define architecture
-        self.n_styles = opts.n_styles
+        self.n_styles = 16
         self.encoder = self.set_encoder()
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
         # Load weights if needed
         self.load_weights()
 
     def set_encoder(self):
-        if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
-            encoder = restyle_e4e_encoders.ProgressiveBackboneEncoder(50, 'ir_se', self.n_styles, self.opts)
-        elif self.opts.encoder_type == 'ResNetProgressiveBackboneEncoder':
-            encoder = restyle_e4e_encoders.ResNetProgressiveBackboneEncoder(self.n_styles, self.opts)
+        if self.opts.encoder_type == 'BackboneEncoder':
+            encoder = restyle_psp_encoders.BackboneEncoder(50, 'ir_se', self.n_styles, self.opts)
+        elif self.opts.encoder_type == 'ResNetBackboneEncoder':
+            encoder = restyle_psp_encoders.ResNetBackboneEncoder(self.n_styles, self.opts)
         else:
             raise Exception(f'{self.opts.encoder_type} is not a valid encoders')
         return encoder
 
     def load_weights(self):
         if self.opts.checkpoint_path is not None:
-            print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
+            print(f'Loading ReStyle pSp from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
             self.decoder = SG3Generator(checkpoint_path=None).decoder
@@ -39,7 +39,7 @@ class e4e(nn.Module):
         else:
             encoder_ckpt = self._get_encoder_checkpoint()
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
-            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
+            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder
             self.latent_avg = self.decoder.mapping.w_avg
 
     def forward(self, x, latent=None, resize=True, input_code=False, landmarks_transform=None,
@@ -61,10 +61,7 @@ class e4e(nn.Module):
 
         # generate the aligned images
         identity_transform = common.get_identity_transform()
-        if not self.opts.sgxl:
-            identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
-        else:
-            identity_transform = torch.from_numpy(identity_transform).cuda().float()
+        identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
         self.decoder.synthesis.input.transform = identity_transform
         images = self.decoder.synthesis(codes, noise_mode='const', force_fp32=True)
 

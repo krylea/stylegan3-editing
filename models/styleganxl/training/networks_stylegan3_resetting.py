@@ -608,8 +608,7 @@ class SuperresGenerator(torch.nn.Module):
         self.up_factor = up_factor
 
         # load pretrained stem
-        with dnnlib.util.open_url(path_stem) as f:
-            G_stem = legacy.load_network_pkl(f)['G_ema']
+        G_stem = self.load_stem()
         self.mapping = G_stem.mapping
         self.synthesis = G_stem.synthesis
 
@@ -670,10 +669,16 @@ class SuperresGenerator(torch.nn.Module):
             self.synthesis.layer_names.append(name)
             self.head_layer_names.append(name)
 
-    def reinit_stem(self):
-        print("Reinitialize stem")
+    def load_stem(self):
         with dnnlib.util.open_url(self.path_stem) as f:
             G_stem = legacy.load_network_pkl(f)['G_ema']
+        if hasattr(G_stem, 'decoder'):
+            G_stem = G_stem.decoder
+        return G_stem
+
+    def reinit_stem(self):
+        print("Reinitialize stem")
+        G_stem = self.load_stem()
 
         # cut off critically sampled layers
         for name in reversed(G_stem.synthesis.layer_names):

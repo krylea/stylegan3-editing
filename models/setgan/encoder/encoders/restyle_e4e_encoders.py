@@ -4,8 +4,8 @@ from torch import nn
 from torch.nn import Conv2d, BatchNorm2d, PReLU, Sequential, Module
 from torchvision.models import resnet34
 
-from inversion.models.encoders.helpers import get_blocks, bottleneck_IR, bottleneck_IR_SE
-from inversion.models.encoders.map2style import GradualStyleBlock
+from models.setgan.encoder.encoders.helpers import get_blocks, bottleneck_IR, bottleneck_IR_SE
+from models.setgan.encoder.encoders.map2style import GradualStyleBlock
 
 
 class ProgressiveStage(Enum):
@@ -35,7 +35,7 @@ class ProgressiveBackboneEncoder(Module):
     progressive training scheme from e4e_modules.
     Note this class is designed to be used for the human facial domain.
     """
-    def __init__(self, num_layers, mode='ir', n_styles=16, opts=None):
+    def __init__(self, num_layers, mode='ir', n_styles=16, input_nc=3):
         super(ProgressiveBackboneEncoder, self).__init__()
         assert num_layers in [50, 100, 152], 'num_layers should be 50,100, or 152'
         assert mode in ['ir', 'ir_se'], 'mode should be ir or ir_se'
@@ -45,7 +45,7 @@ class ProgressiveBackboneEncoder(Module):
         elif mode == 'ir_se':
             unit_module = bottleneck_IR_SE
 
-        self.input_layer = Sequential(Conv2d(opts.input_nc, 64, (3, 3), 1, 1, bias=False),
+        self.input_layer = Sequential(Conv2d(input_nc, 64, (3, 3), 1, 1, bias=False),
                                       BatchNorm2d(64),
                                       PReLU(64))
         modules = []
@@ -94,10 +94,10 @@ class ResNetProgressiveBackboneEncoder(Module):
     map of the encoder. This classes uses the simplified architecture applied over an ResNet34 backbone with the
     progressive training scheme from e4e_modules.
     """
-    def __init__(self, n_styles=16, opts=None):
+    def __init__(self, n_styles=16, input_nc=3):
         super(ResNetProgressiveBackboneEncoder, self).__init__()
 
-        self.conv1 = nn.Conv2d(opts.input_nc, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(input_nc, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = BatchNorm2d(64)
         self.relu = PReLU(64)
 

@@ -24,6 +24,7 @@ from models.styleganxl.torch_utils import misc
 from models.styleganxl.torch_utils import training_stats
 from models.styleganxl.torch_utils.ops import conv2d_gradfix
 from models.styleganxl.torch_utils.ops import grid_sample_gradfix
+from models.styleganxl.pg_modules.blocks import Interpolate
 
 import models.styleganxl.legacy as legacy
 #from metrics import metric_main
@@ -32,6 +33,8 @@ import setgan.safe_dataset as safe_dataset
 
 from setgan.dataset import ImageMultiSetGenerator, ImagesDataset, build_datasets
 from models.setgan.setgan import SetGAN
+
+from setgan.utils import to_images, to_imgset
 
 from setgan.metric_utils import ConditionalMetrics
 
@@ -80,8 +83,12 @@ def setup_snapshot_image_grid(training_set, random_seed=0, gw=None, gh=None):
 
 #----------------------------------------------------------------------------
 
-def save_image_grid(reference_img, generated_img, fname, drange):
+def save_image_grid(reference_img, generated_img, fname, drange, downsample_res=-1):
     lo, hi = drange
+
+    if downsample_res > 0:
+        downsample = Interpolate(downsample_res)
+        reference_img = to_imgset(downsample(to_images(reference_img)), initial_set=reference_img)
 
     # handle reference_img
     reference_img = np.asarray(reference_img, dtype=np.float32)
@@ -158,7 +165,8 @@ def training_loop(
     reference_size          = (7,12),
     candidate_size          = (1,4),
     eval_metric             = 'fid-agg',
-    step_interval           = STEP_INTERVAL
+    step_interval           = STEP_INTERVAL,
+    downsample_res          = -1
 ):
     # Initialize.
     start_time = time.time()
@@ -199,15 +207,17 @@ def training_loop(
     # Construct networks.
     if rank == 0:
         print('Constructing networks...')
-    common_kwargs = dict(c_dim=0, img_resolution=training_set[0].resolution, img_channels=training_set[0].num_channels)
+    model_res = downsample_res if downsample_res > 0 else training_set[0].resolution
+    common_kwargs = dict(c_dim=0, img_resolution=model_res, img_channels=training_set[0].num_channels)
     #G = dnnlib.util.construct_class_by_name(**G_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
     G = SetGAN(G_kwargs).train().requires_grad_(False).to(device)
     G_ema = copy.deepcopy(G).eval()
     
     D = dnnlib.util.construct_class_by_name(**D_kwargs, **common_kwargs).train().requires_grad_(False).to(device) # subclass of torch.nn.Module
-    with dnnlib.util.open_url(G_kwargs.stylegan_weights) as f:
-        resume_data = legacy.load_network_pkl(f)
-    D.load_weights(resume_data['D'])
+    if G_kwargs.decoder_ckpt is not None:
+        with dnnlib.util.open_url(G_kwargs.decoder_ckpt) as f:
+            resume_data = legacy.load_network_pkl(f)
+        D.load_weights(resume_data['D'])
 
     # Check for existing checkpoint
     ckpt_pkl = None
@@ -295,8 +305,6 @@ def training_loop(
             phase.end_event = torch.cuda.Event(enable_timing=True)
 
     # Export sample images.
-
-    
     if rank == 0:
         print('Exporting sample images...')
 
@@ -309,6 +317,7 @@ def training_loop(
             # Generate reference sets (assuming set size of 5 for now)
             N = len(validation_set)
             sample_refs, = validation_set_generator(N, set_sizes=(5,), class_id=torch.arange(N))
+            sample_refs = (sample_refs.to(torch.float32) / 127.5 - 1)
 
             # Getting grid information and labels
             #grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
@@ -321,7 +330,7 @@ def training_loop(
             generated_images = torch.cat(generated_images, dim=0)
 
             samples_path_init = os.path.join(run_dir, "fakes_init.png")
-            save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1])
+            save_image_grid(sample_refs, generated_images, samples_path_init, drange=[-1,1], downsample_res=downsample_res)
 
             torch.save({
                 'reference_set': sample_refs,
@@ -384,7 +393,10 @@ def training_loop(
         with torch.autograd.profiler.record_function('data_fetch'):
             reference_samples = torch.randint(*reference_size, (1,))
             candidate_samples = torch.randint(*candidate_size, (1,))
-            reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+            #reference_set, candidate_set = training_set_generator(batch_size, set_sizes=(reference_samples, candidate_samples))
+
+            reference_set = torch.randint(0, 255, (batch_size, reference_samples, 3, training_set[0].resolution, training_set[0].resolution))
+            candidate_set = torch.randint(0, 255, (batch_size, candidate_samples, 3, model_res, model_res))
 
             #reference_set = torch.randint(0, 255, (batch_size, reference_samples, 3, training_set[0].resolution, training_set[0].resolution))
             #candidate_set = torch.randint(0, 255, (batch_size, candidate_samples, 3, training_set[0].resolution, training_set[0].resolution))
@@ -519,7 +531,8 @@ def training_loop(
         if (rank == 0) and (image_snapshot_ticks is not None) and (done or cur_tick % image_snapshot_ticks == 0):
             generated_images = [G_ema(ref_set.to(device), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
             generated_images = torch.cat(generated_images, dim=0)
-            save_image_grid(sample_refs, generated_images, os.path.join(run_dir, f'fakes{cur_nimg//step_interval:06d}.png'), drange=[-1,1])
+            save_image_grid(sample_refs, generated_images, os.path.join(run_dir, f'fakes{cur_nimg//step_interval:06d}.png'), 
+                            drange=[-1,1], downsample_res=downsample_res)
 
         # Save network snapshot.
         snapshot_pkl = None
@@ -571,7 +584,7 @@ def training_loop(
                 print('Evaluating metrics...')
             for metric in all_metrics.metrics:
                 result_dict = all_metrics.calc_metric(metric=metric, G=snapshot_data['G_ema'],
-                                                        dataset_kwargs=dataset_kwargs, num_gpus=num_gpus, rank=rank, device=device)
+                                                        dataset_kwargs=dataset_kwargs, num_gpus=num_gpus, rank=rank, device=device, downsample_res=downsample_res)
                 if rank == 0:
                     all_metrics.report_metric(result_dict, run_dir=run_dir, snapshot_pkl=snapshot_pkl)
                 stats_metrics.update(result_dict.results)

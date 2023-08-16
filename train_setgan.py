@@ -66,7 +66,7 @@ def launch_training(c, exp_name, outdir, dry_run):
     #if os.path.isdir(outdir):
     #    prev_run_dirs = [x for x in os.listdir(outdir) if os.path.isdir(os.path.join(outdir, x))]
 
-    c.run_dir = os.path.join(outdir, exp_name)
+    c.run_dir = os.path.join(outdir, exp_name + "_" + str(c.dataset_kwargs.resolution))
 
     '''
     matching_dirs = [re.fullmatch(r'\d{5}' + f'-{desc}', x) for x in prev_run_dirs if re.fullmatch(r'\d{5}' + f'-{desc}', x) is not None]
@@ -145,27 +145,76 @@ def parse_comma_separated_list(s):
 #----------------------------------------------------------------------------
 
 def init_setgan_args(opts, c):
+    assert opts.encoder_res >= opts.resolution
+
     c.dataset_kwargs = dnnlib.EasyDict(resolution=opts.resolution, dataset_name=opts.dataset_name)
 
     # Generator
     c.G_kwargs = dnnlib.EasyDict()
-    c.G_kwargs.n_styles = opts.n_styles
+    c.G_kwargs.n_styles = opts.n_styles if opts.n_styles is not None else opts.syn_layers+2
     c.G_kwargs.latent = opts.g_latent
-    c.G_kwargs.input_nc = opts.input_nc
+    c.G_kwargs.input_nc = 3 if opts.restyle_mode == 'none' else 6
     c.G_kwargs.n_heads = opts.g_attn_heads
     c.G_kwargs.attn_layers = opts.g_attn_layers
     c.G_kwargs.use_set_decoder = opts.use_set_decoder
     c.G_kwargs.disable_style_concat = opts.disable_style_concat
     c.G_kwargs.use_temperature = opts.use_temperature
-    c.G_kwargs.encoder_type = 'ResNetProgressiveBackboneEncoder' if opts.dataset_name == 'imagenet' else 'ProgressiveBackboneEncoder'
-    c.G_kwargs.checkpoint_path = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
-    c.G_kwargs.stylegan_weights = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
-    c.G_kwargs.train_encoder = opts.train_encoder
-    c.G_kwargs.train_decoder = opts.train_decoder
     c.G_kwargs.restyle_mode = opts.restyle_mode
     c.G_kwargs.restyle_iters = opts.restyle_iters
     c.G_kwargs.freeze_encoder = opts.freeze_encoder
     c.G_kwargs.freeze_decoder = opts.freeze_decoder
+
+    if opts.dataset_name == 'imagenet':
+        c.G_kwargs.encoder_type='ResNetProgressiveBackboneEncoder'
+        c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
+            class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ResNetProgressiveBackboneEncoder',
+            input_nc=c.G_kwargs.input_nc,
+            n_styles=c.G_kwargs.n_styles 
+        )
+    else:
+        c.G_kwargs.encoder_type='ProgressiveBackboneEncoder'
+        c.G_kwargs.encoder_kwargs = dnnlib.EasyDict(
+            class_name='models.setgan.encoder.encoders.restyle_e4e_encoders.ProgressiveBackboneEncoder',
+            num_layers=50,
+            mode='ir_se',
+            input_nc=c.G_kwargs.input_nc,
+            n_styles=c.G_kwargs.n_styles 
+        )
+    
+
+    if opts.superres:
+        c.G_kwargs.decoder_kwargs = dnnlib.EasyDict(
+            class_name='models.styleganxl.training.networks_stylegan3_resetting.SuperresGenerator',
+            path_stem=opts.path_stem,
+            head_layers=opts.head_layers,
+            up_factor=opts.up_factor,
+        )
+        c.G_kwargs.path_stem = opts.path_stem
+    else:
+        c.G_kwargs.decoder_kwargs = dnnlib.EasyDict(
+            class_name='models.styleganxl.training.networks_stylegan3_resetting.Generator',
+            channel_base=opts.cbase * 2,
+            channel_max=opts.cmax*2,
+            magnitude_ema_beta=0.5 ** (c.batch_size / (20 * 1e3)),
+            conv_kernel=1 if opts.cfg == 'stylegan3-r' else 3,
+            use_radial_filters = True if opts.cfg == 'stylegan3-r' else False
+        )
+    c.G_kwargs.decoder_kwargs.w_dim = 512
+    c.G_kwargs.decoder_kwargs.z_dim = 64
+    c.G_kwargs.decoder_kwargs.mapping_kwargs=dnnlib.EasyDict()
+    c.G_kwargs.decoder_kwargs.mapping_kwargs.rand_embedding = False
+    c.G_kwargs.decoder_kwargs.num_layers = opts.syn_layers
+    c.G_kwargs.decoder_kwargs.mapping_kwargs.num_layers = 2
+    c.G_kwargs.decoder_kwargs.c_dim = 0
+    c.G_kwargs.decoder_kwargs.img_resolution = opts.resolution
+    c.G_kwargs.decoder_kwargs.img_channels = 3
+
+    if opts.use_pretrained:
+        c.G_kwargs.encoder_ckpt = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
+        c.G_kwargs.decoder_ckpt = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]
+    else:
+        c.G_kwargs.encoder_ckpt = None
+        c.G_kwargs.decoder_ckpt = None
 
     # Discriminator
     c.D_kwargs = dnnlib.EasyDict(
@@ -197,6 +246,13 @@ def init_setgan_args(opts, c):
     c.loss_kwargs.cls_weight = 0.0  # use classifier guidance only for superresolution training (i.e., with pretrained stem)
     c.loss_kwargs.cls_model = 'deit_small_distilled_patch16_224'
     c.loss_kwargs.train_head_only = False
+    
+    if opts.encoder_res > 0:
+        assert opts.encoder_res > opts.resolution
+        c.downsample_res = opts.resolution
+        c.G_kwargs.decoder_kwargs.img_resolution = opts.resolution
+        c.dataset_kwargs.resolution = opts.encoder_res
+        
 
 def init_sgxl_args(opts, c):
     c.dataset_kwargs, dataset_name = init_dataset_kwargs(data=opts.data, resolution=opts.resolution)
@@ -309,7 +365,7 @@ def init_sgxl_args(opts, c):
 @click.option('--input_nc', type=int, default=3)
 @click.option('--g_latent', type=int, default=512)
 @click.option('--d_latent', type=int, default=512)
-@click.option('--n_styles', type=int, default=18)
+@click.option('--n_styles', type=int, default=None)
 @click.option('--g_attn_heads', type=int, default=8)
 @click.option('--d_attn_heads', type=int, default=8)
 @click.option('--g_attn_layers', type=int, default=4)
@@ -318,8 +374,7 @@ def init_sgxl_args(opts, c):
 @click.option('--disable_style_concat', is_flag=True)
 @click.option('--use_temperature', is_flag=True)
 @click.option('--encoder_type', type=str, default='ResNetProgressiveBackboneEncoder')
-@click.option('--checkpoint_path', type=str, default=None)
-@click.option('--stylegan_weights', type=str)
+@click.option('--resume_ckpt', type=str)
 @click.option('--train_encoder', is_flag=True)
 @click.option('--train_decoder', is_flag=True)
 @click.option('--exp_name', type=str, required=True)
@@ -332,6 +387,8 @@ def init_sgxl_args(opts, c):
 @click.option('--step_interval', type=int, default=1000)
 @click.option('--freeze_encoder', is_flag=True)
 @click.option('--freeze_decoder', is_flag=True)
+@click.option('--use_pretrained', is_flag=True)
+@click.option('--encoder_res', type=int, default=-1)
 
 def main(**kwargs):
     # Initialize config.
@@ -442,14 +499,6 @@ def main(**kwargs):
 
     if opts.superres:
         assert opts.path_stem is not None, "When training superres head, provide path to stem"
-
-        # Generator
-        c.G_kwargs = dnnlib.EasyDict(
-            class_name='training.networks_stylegan3_resetting.SuperresGenerator',
-            path_stem=opts.path_stem,
-            head_layers=opts.head_layers,
-            up_factor=opts.up_factor,
-        )
 
         # Loss
         c.loss_kwargs.pl_weight = 0.0

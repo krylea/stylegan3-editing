@@ -2,10 +2,10 @@ import numpy as np
 import torch
 from PIL import Image
 
-from inversion.models.mtcnn.mtcnn_pytorch.src.align_trans import get_reference_facial_points, warp_and_crop_face
-from inversion.models.mtcnn.mtcnn_pytorch.src.box_utils import nms, calibrate_box, get_image_boxes, convert_to_square
-from inversion.models.mtcnn.mtcnn_pytorch.src.first_stage import run_first_stage
-from inversion.models.mtcnn.mtcnn_pytorch.src.get_nets import PNet, RNet, ONet
+from models.setgan.encoder.mtcnn.mtcnn_pytorch.src.align_trans import get_reference_facial_points, warp_and_crop_face
+from models.setgan.encoder.mtcnn.mtcnn_pytorch.src.box_utils import nms, calibrate_box, get_image_boxes, convert_to_square
+from models.setgan.encoder.mtcnn.mtcnn_pytorch.src.first_stage import run_first_stage
+from models.setgan.encoder.mtcnn.mtcnn_pytorch.src.get_nets import PNet, RNet, ONet
 
 device = 'cuda:0'
 
