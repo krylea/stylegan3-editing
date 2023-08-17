@@ -323,7 +323,7 @@ def training_loop(
             #grid_size, _, labels = setup_snapshot_image_grid(training_set=training_set)
 
             # Generate noise tensors
-            grid_s = torch.randn([N, 5, 1, G.decoder.z_dim], device=device).repeat(1, 1, G_ema.n_styles, 1)
+            grid_s = torch.randn([N, 5, G.decoder.z_dim], device=device)
 
             # Generate images based on reference set and noise tensors
             generated_images = [G_ema(ref_set.to(device), s).cpu() for ref_set, s in zip(sample_refs.split(batch_gpu), grid_s.split(batch_gpu))]
