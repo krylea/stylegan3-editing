@@ -353,6 +353,7 @@ class Split():
                 images = images.repeat([1, 3, 1, 1])
 
             if opts.downsample_res > 0:
+                images = images.to(torch.float32)
                 images = downsample(images)
 
             with torch.no_grad():
