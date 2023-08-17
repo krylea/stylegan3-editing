@@ -66,7 +66,7 @@ def launch_training(c, exp_name, outdir, dry_run):
     #if os.path.isdir(outdir):
     #    prev_run_dirs = [x for x in os.listdir(outdir) if os.path.isdir(os.path.join(outdir, x))]
 
-    c.run_dir = os.path.join(outdir, exp_name + "_" + str(c.dataset_kwargs.resolution))
+    c.run_dir = os.path.join(outdir, exp_name + "_" + str(c.G_kwargs.decoder_kwargs.img_resolution))
 
     '''
     matching_dirs = [re.fullmatch(r'\d{5}' + f'-{desc}', x) for x in prev_run_dirs if re.fullmatch(r'\d{5}' + f'-{desc}', x) is not None]
@@ -92,7 +92,7 @@ def launch_training(c, exp_name, outdir, dry_run):
     print(f'Training duration:   {c.total_kimg} kimg')
     print(f'Dataset path:        {dataset_paths[c.dataset_kwargs.dataset_name]}')
     #print(f'Dataset size:        {c.training_set_kwargs.max_size} images')
-    print(f'Dataset resolution:  {c.dataset_kwargs.resolution}')
+    print(f'Dataset resolution:  {c.G_kwargs.decoder_kwargs.img_resolution}')
     #print(f'Dataset labels:      {c.training_set_kwargs.use_labels}')
     #print(f'Dataset x-flips:     {c.training_set_kwargs.xflip}')
     print()
