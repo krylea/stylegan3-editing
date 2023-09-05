@@ -4,7 +4,13 @@ dataset_paths = {
 	'celeba_train': Path(''),
 	'celeba_test': Path(''),
 
-    'vggface': '../setgan2/datasets/vggface/train/',
+    'vggface_train': '../setgan2/datasets/vggface/train/',
+    'vggface_test': '../setgan2/datasets/vggface/test/',
+    'animalfaces_train': '../setgan2/datasets/animalfaces/train',
+    'animalfaces_test': '../setgan2/datasets/animalfaces/test',
+    'flowers_train': '../setgan2/datasets/flowers/train',
+    'flowers_test': '../setgan2/datasets/flowers/test',
+
 	'ffhq': '/ssd003/projects/ffhq/images1024x1024/',
 	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
 

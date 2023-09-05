@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from configs.paths_config import model_paths
-from setgan.encoder.encoders import restyle_psp_encoders
+from models.setgan.encoder.encoders import restyle_psp_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
 
