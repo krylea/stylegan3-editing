@@ -30,7 +30,8 @@ class e4e(nn.Module):
 
     def set_decoder(self):
         with open(self.opts.stylegan_weights, "rb") as f:
-            self.decoder = pickle.load(f)['G_ema'].cuda()
+            decoder = pickle.load(f)['G_ema'].cuda()
+        return decoder
 
 
     def set_encoder(self):
