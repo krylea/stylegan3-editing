@@ -20,7 +20,7 @@ class e4e(nn.Module):
 
         self.decoder_type = self.opts.decoder_type
         self.decoder = self.set_decoder()
-        self.n_styles = self.decoder.n_latent if self.opts.model_type == 'stylegan2' else self.decoder.num_ws
+        self.n_styles = self.decoder.n_latent if self.decoder_type == 'stylegan2' else self.decoder.num_ws
         self.opts.n_styles = self.decoder.num_ws
 
         self.encoder = self.set_encoder()
