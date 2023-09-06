@@ -39,6 +39,7 @@ python3 inversion/scripts/train_restyle_e4e.py \
 --n_iters_per_batch 3 \
 --truncation_psi 0.7 \
 --output_size $resolution \
+--resolution $resolution \
 --stylegan_weights $path \
 --save_interval 2000 \
 --ckpt_dir /checkpoint/kaselby/$name \

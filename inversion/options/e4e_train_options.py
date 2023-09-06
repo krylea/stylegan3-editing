@@ -46,3 +46,5 @@ class e4eTrainOptions(TrainOptions):
 
     #sgxl: bool = False
     decoder_type: str = 'sgxl'
+
+    resolution: int = 256

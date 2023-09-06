@@ -16,7 +16,7 @@ class e4e(nn.Module):
         self.set_opts(opts)
         # Define architecture
         
-        self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
+        self.face_pool = torch.nn.AdaptiveAvgPool2d((opts.resolution, opts.resolution))
 
         self.decoder_type = self.opts.decoder_type
         self.decoder = self.set_decoder()
@@ -73,12 +73,14 @@ class e4e(nn.Module):
                 codes = codes + self.latent_avg.repeat(codes.shape[0], 1, 1)
 
         # generate the aligned images
-        identity_transform = common.get_identity_transform()
-        if self.decoder_type == 'stylegan3':
-            identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
-        else:
-            identity_transform = torch.from_numpy(identity_transform).cuda().float()
-        self.decoder.synthesis.input.transform = identity_transform
+        
+        if self.decoder_type != 'stylegan2':
+            identity_transform = common.get_identity_transform()
+            if self.decoder_type == 'stylegan3':
+                identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
+            else:
+                identity_transform = torch.from_numpy(identity_transform).cuda().float()
+            self.decoder.synthesis.input.transform = identity_transform
         images = self.decoder.synthesis(codes, noise_mode='const', force_fp32=True)
 
         if resize:
