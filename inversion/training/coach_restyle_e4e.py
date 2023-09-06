@@ -39,7 +39,7 @@ class Coach:
         if self.net.latent_avg is None:
             self.net.latent_avg = self.net.decoder.mapping.w_avg
 
-        self.n_styles = self.opts.n_styles
+        self.n_styles = self.net.n_styles
 
         # get the image corresponding to the latent average
         self.avg_image = self.net(self.net.latent_avg.repeat(self.n_styles, 1).unsqueeze(0),

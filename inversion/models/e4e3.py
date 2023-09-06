@@ -13,9 +13,15 @@ class e4e(nn.Module):
         super(e4e, self).__init__()
         self.set_opts(opts)
         # Define architecture
-        self.n_styles = opts.n_styles
-        self.encoder = self.set_encoder()
+        
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
+
+        self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder
+        self.n_styles = self.decoder.num_ws
+        self.opts.n_styles = self.decoder.num_ws
+
+        self.encoder = self.set_encoder()
+
         # Load weights if needed
         self.load_weights()
 
@@ -33,13 +39,11 @@ class e4e(nn.Module):
             print(f'Loading ReStyle e4e from checkpoint: {self.opts.checkpoint_path}')
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(self._get_keys(ckpt, 'encoder'), strict=True)
-            self.decoder = SG3Generator(checkpoint_path=None).decoder
             self.decoder.load_state_dict(self._get_keys(ckpt, 'decoder', remove=["synthesis.input.transform"]), strict=False)
             self._load_latent_avg(ckpt)
         else:
             encoder_ckpt = self._get_encoder_checkpoint()
             self.encoder.load_state_dict(encoder_ckpt, strict=False)
-            self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder.cuda()
             self.latent_avg = self.decoder.mapping.w_avg
 
     def forward(self, x, latent=None, resize=True, input_code=False, landmarks_transform=None,
