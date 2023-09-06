@@ -4,13 +4,14 @@
 #SBATCH --open-mode=append
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:4
-#SBATCH --partition=a40
+#SBATCH --partition=rtx6000,t4v2
 #SBATCH --cpus-per-gpu=2
 #SBATCH --mem=50GB
 
 name=$1
 path=$2
 dataset=$3
+resolution=$4
 
 python3 inversion/scripts/train_restyle_e4e.py \
 --dataset_type ${dataset}_encode \
@@ -29,7 +30,7 @@ python3 inversion/scripts/train_restyle_e4e.py \
 --input_nc 6 \
 --n_iters_per_batch 3 \
 --truncation_psi 0.7 \
---output_size 256 \
+--output_size $resolution \
 --stylegan_weights $path \
 --save_interval 2000 \
 --ckpt_dir /checkpoint/kaselby/$name \
