@@ -6,6 +6,8 @@ from inversion.models.encoders import restyle_e4e_encoders
 from models.stylegan3.model import SG3Generator
 from utils import common
 
+import pickle
+
 
 class e4e(nn.Module):
 
@@ -16,14 +18,20 @@ class e4e(nn.Module):
         
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
 
-        self.decoder = SG3Generator(checkpoint_path=self.opts.stylegan_weights).decoder
-        self.n_styles = self.decoder.num_ws
+        self.decoder_type = self.opts.decoder_type
+        self.decoder = self.set_decoder()
+        self.n_styles = self.decoder.n_latent if self.opts.model_type == 'stylegan2' else self.decoder.num_ws
         self.opts.n_styles = self.decoder.num_ws
 
         self.encoder = self.set_encoder()
 
         # Load weights if needed
         self.load_weights()
+
+    def set_decoder(self):
+        with open(self.opts.stylegan_weights, "rb") as f:
+            self.decoder = pickle.load(f)['G_ema'].cuda()
+
 
     def set_encoder(self):
         if self.opts.encoder_type == 'ProgressiveBackboneEncoder':
@@ -65,7 +73,7 @@ class e4e(nn.Module):
 
         # generate the aligned images
         identity_transform = common.get_identity_transform()
-        if not self.opts.sgxl:
+        if self.decoder_type == 'stylegan3':
             identity_transform = torch.from_numpy(identity_transform).unsqueeze(0).repeat(x.shape[0], 1, 1).cuda().float()
         else:
             identity_transform = torch.from_numpy(identity_transform).cuda().float()

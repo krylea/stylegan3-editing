@@ -30,5 +30,19 @@ DATASETS = {
 		'train_target_root': dataset_paths['vggface_train'],
 		'test_source_root': dataset_paths['vggface_test'],
 		'test_target_root': dataset_paths['vggface_test']
+	},
+    'cifar_encode': {
+		'transforms': transforms_config.EncodeTransforms,
+		'train_source_root': dataset_paths['cifar_train'],
+		'train_target_root': dataset_paths['cifar_train'],
+		'test_source_root': dataset_paths['cifar_test'],
+		'test_target_root': dataset_paths['cifar_test']
+	},
+    'mini_encode': {
+		'transforms': transforms_config.EncodeTransforms,
+		'train_source_root': dataset_paths['mini_train'],
+		'train_target_root': dataset_paths['mini_train'],
+		'test_source_root': dataset_paths['mini_test'],
+		'test_target_root': dataset_paths['mini_test']
 	}
 }

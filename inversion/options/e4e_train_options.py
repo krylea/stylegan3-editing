@@ -44,4 +44,5 @@ class e4eTrainOptions(TrainOptions):
     resume_training_from_ckpt: Optional[Path] = None
     update_param_list: Optional[str] = None
 
-    sgxl: bool = False
+    #sgxl: bool = False
+    decoder_type: str = 'sgxl'
