@@ -12,10 +12,18 @@ name=$1
 path=$2
 dataset=$3
 resolution=$4
+model=${5:-'sgxl'}
+face_dataset=${6:-0}
+
+encoder_type=ResNetProgressiveBackboneEncoder
+if [ $face_dataset -eq 1 ]
+then
+    encoder_type=ProgressiveBackboneEncoder
+fi
 
 python3 inversion/scripts/train_restyle_e4e.py \
 --dataset_type ${dataset}_encode \
---encoder_type ResNetProgressiveBackboneEncoder \
+--encoder_type $encoder_type \
 --exp_dir experiments/$name \
 --batch_size 2 \
 --test_batch_size 2 \
@@ -35,5 +43,5 @@ python3 inversion/scripts/train_restyle_e4e.py \
 --save_interval 2000 \
 --ckpt_dir /checkpoint/kaselby/$name \
 --n_styles 18 \
---decoder_type sgxl \
+--decoder_type $model \
 --resume_training_from_ckpt /checkpoint/kaselby/$name/checkpoint.pt
