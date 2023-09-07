@@ -244,7 +244,8 @@ class Coach:
             agg_loss_dict.append(cur_loss_dict)
 
             # Logging related
-            self.parse_and_log_images(id_logs, x, y, y_hats, title='images/test', subscript=f'{batch_idx:04d}')
+            if batch_idx < 20:
+                self.parse_and_log_images(id_logs, x, y, y_hats, title='images/test', subscript=f'{batch_idx:04d}')
 
             # For first step just do sanity test on small amount of data
             if self.global_step == 0 and batch_idx >= 4:
