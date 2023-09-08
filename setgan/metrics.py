@@ -49,7 +49,7 @@ class FID(Metric):
             rel_lo=0, rel_hi=1, capture_mean_cov=True, sfid=self.sfid)
 
         if opts.rank != 0:
-            return float('nan')
+            return {'fid': float('nan')}
 
         def _fid(mu_real, sigma_real, mu_gen, sigma_gen):
             m = np.square(mu_gen - mu_real).sum()
