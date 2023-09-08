@@ -90,7 +90,7 @@ def launch_training(c, exp_name, outdir, dry_run):
     print(f'Number of GPUs:      {c.num_gpus}')
     print(f'Batch size:          {c.batch_size} images')
     print(f'Training duration:   {c.total_kimg} kimg')
-    print(f'Dataset path:        {dataset_paths[c.dataset_kwargs.dataset_name]}')
+    #print(f'Dataset path:        {dataset_paths[c.dataset_kwargs.dataset_name]}')
     #print(f'Dataset size:        {c.training_set_kwargs.max_size} images')
     print(f'Dataset resolution:  {c.G_kwargs.decoder_kwargs.img_resolution}')
     #print(f'Dataset labels:      {c.training_set_kwargs.use_labels}')
