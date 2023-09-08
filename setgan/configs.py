@@ -6,6 +6,10 @@ dataset_paths = {
 	'celeba-src': "/scratch/ssd002/datasets/celeba/Img/img_align_celeba",
 	'celeba-ident': "/scratch/ssd002/datasets/celeba/Anno/identity_CelebA.txt",
 	'celeba-attr': "/scratch/ssd002/datasets/celeba/Anno/list_attr_celeba.txt",
+    'cifar-train': '../setgan2/datasets/cifar100/train',
+    'cifar-test': '../setgan2/datasets/cifar100/test',
+    'mini-train': '../setgan2/datasets/mini-imagenet/train',
+    'mini-test': '../setgan2/datasets/mini-imagenet/test',
 }
 
 

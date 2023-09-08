@@ -16,6 +16,7 @@ class EncodeTransforms(TransformsConfig):
 
 	def __init__(self, opts):
 		super(EncodeTransforms, self).__init__(opts)
+		self.resolution=opts.resolution
 
 	def get_transforms(self):
 		transforms_dict = {

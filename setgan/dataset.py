@@ -321,6 +321,16 @@ def load_celeba_by_identities(resolution, val_frac=0.1):
     datasets = ImagesDataset.from_folder_by_identities(dataset_paths['celeba-src'], dataset_paths['celeba-ident'], resolution)
     return split_datasets(datasets, val_frac, randomize=False)
 
+def load_cifar100(resolution):
+    train_datasets = ImagesDataset.from_folder_by_category(dataset_paths['cifar-train'], resolution)
+    test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['cifar-test'], resolution)
+    return train_datasets, test_datasets
+
+def load_mini(resolution):
+    train_datasets = ImagesDataset.from_folder_by_category(dataset_paths['mini-train'], resolution)
+    test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['mini-test'], resolution)
+    return train_datasets, test_datasets
+
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
         return load_celeba_by_attributes(resolution)
@@ -329,6 +339,11 @@ def build_datasets(dataset_name, resolution):
         return load_imagenet(resolution)
     elif dataset_name == 'celeba':
         return load_celeba_by_attributes(resolution)
+    elif dataset_name == 'cifar100':
+        return load_cifar100(resolution)
+    elif dataset_name == 'mini-imagenet':
+        return load_mini(resolution)
+
 
 def split_datasets(datasets, val_frac, randomize=False, seed=None):
     N = len(datasets)

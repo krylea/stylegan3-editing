@@ -10,6 +10,10 @@ dataset_paths = {
     'animalfaces_test': '../setgan2/datasets/animalfaces/test',
     'flowers_train': '../setgan2/datasets/flowers/train',
     'flowers_test': '../setgan2/datasets/flowers/test',
+    'cifar_train': '../setgan2/datasets/cifar100/train',
+    'cifar_test': '../setgan2/datasets/cifar100/test',
+    'mini_train': '../setgan2/datasets/mini-imagenet/train',
+    'mini_test': '../setgan2/datasets/mini-imagenet/test',
 
 	'ffhq': '/ssd003/projects/ffhq/images1024x1024/',
 	'ffhq_unaligned': Path('/ssd003/projects/ffhq/images1024x1024/'),
