@@ -331,6 +331,21 @@ def load_mini(resolution):
     test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['mini-test'], resolution)
     return train_datasets, test_datasets
 
+def load_vggface(resolution):
+    train_datasets = ImagesDataset.from_folder_by_category(dataset_paths['vggface-train'], resolution)
+    test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['vggface-test'], resolution)
+    return train_datasets, test_datasets
+
+def load_animalfaces(resolution):
+    train_datasets = ImagesDataset.from_folder_by_category(dataset_paths['animalfaces-train'], resolution)
+    test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['animalfaces-test'], resolution)
+    return train_datasets, test_datasets
+
+def load_flowers(resolution):
+    train_datasets = ImagesDataset.from_folder_by_category(dataset_paths['flowers-train'], resolution)
+    test_datasets = ImagesDataset.from_folder_by_category(dataset_paths['flowers-test'], resolution)
+    return train_datasets, test_datasets
+
 def build_datasets(dataset_name, resolution):
     if dataset_name == 'face':
         return load_celeba_by_attributes(resolution)
@@ -343,6 +358,12 @@ def build_datasets(dataset_name, resolution):
         return load_cifar100(resolution)
     elif dataset_name == 'mini-imagenet':
         return load_mini(resolution)
+    elif dataset_name == 'vggface':
+        return load_vggface(resolution)
+    elif dataset_name == 'animalfaces':
+        return load_animalfaces(resolution)
+    elif dataset_name == 'flowers':
+        return load_flowers(resolution)
 
 
 def split_datasets(datasets, val_frac, randomize=False, seed=None):
