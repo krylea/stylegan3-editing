@@ -10,6 +10,12 @@ dataset_paths = {
     'cifar-test': '../setgan2/datasets/cifar100/test',
     'mini-train': '../setgan2/datasets/mini-imagenet/train',
     'mini-test': '../setgan2/datasets/mini-imagenet/test',
+    'vggface-train': '../setgan2/datasets/vggface/train',
+    'vggface-test': '../setgan2/datasets/vggface/test',
+    'animalfaces-train': '../setgan2/datasets/animalfaces/train',
+    'animalfaces-test': '../setgan2/datasets/animalfaces/test',
+    'flowers-train': '../setgan2/datasets/flowers/train',
+    'flowers-test': '../setgan2/datasets/flowers/test',
 }
 
 
