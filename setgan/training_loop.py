@@ -355,7 +355,7 @@ def training_loop(
 
 
     all_metrics = ConditionalMetrics(validation_set, dataset_name=dataset_kwargs['dataset_name'])
-    all_metrics.add_split('base', reference_size=10, evaluation_size=100, generation_size=100, seed=0)
+    all_metrics.add_split('base', reference_size=10, evaluation_size=90, generation_size=128, seed=0)
 
     for metric in metrics:
         all_metrics.add_metric(metric)
