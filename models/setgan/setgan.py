@@ -69,7 +69,7 @@ class SetGAN(nn.Module):
         if self.opts.decoder_ckpt is not None:
             print(f"Loading StyleGAN3 generator from path: {self.opts.decoder_ckpt}")
             with open(self.opts.decoder_ckpt, "rb") as f:
-                self.decoder = pickle.load(f)['G_ema'].cuda()
+                self.decoder = pickle.load(f)['G_ema'].cpu()
             print('Done!')
         else:
             self.decoder = dnnlib.util.construct_class_by_name(**opts.decoder_kwargs)
