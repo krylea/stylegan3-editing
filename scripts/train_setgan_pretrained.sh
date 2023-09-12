@@ -61,7 +61,8 @@ argstring="$argstring \
 --freeze_encoder \
 --freeze_decoder \
 --use_setgan    \
---use_pretrained"
+--use_pretrained    \
+--use_set_decoder"
 
 if [[ -n $ckpt ]]
 then
