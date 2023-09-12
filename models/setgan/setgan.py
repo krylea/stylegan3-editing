@@ -65,7 +65,14 @@ class SetGAN(nn.Module):
         #self.n_styles = opts.n_styles
         #self.encoder = self.set_encoder()
         #self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
-        self.decoder = dnnlib.util.construct_class_by_name(**opts.decoder_kwargs)
+        
+        if self.opts.decoder_ckpt is not None:
+            print(f"Loading StyleGAN3 generator from path: {self.opts.decoder_ckpt}")
+            with open(self.opts.decoder_ckpt, "rb") as f:
+                self.decoder = pickle.load(f)['G_ema'].cuda()
+            print('Done!')
+        else:
+            self.decoder = dnnlib.util.construct_class_by_name(**opts.decoder_kwargs)
         self.n_styles = self.decoder.num_ws
         opts.n_styles = self.n_styles
         opts.encoder_kwargs.n_styles = self.n_styles
@@ -128,11 +135,7 @@ class SetGAN(nn.Module):
                     altered_input_layer[:, :3, :, :] = encoder_ckpt['input_layer.0.weight']
                     encoder_ckpt['input_layer.0.weight'] = altered_input_layer
         
-        if self.opts.decoder_ckpt is not None:
-            print(f"Loading StyleGAN3 generator from path: {self.opts.decoder_ckpt}")
-            with open(self.opts.decoder_ckpt, "rb") as f:
-                self.decoder = pickle.load(f)['G_ema'].cuda()
-            print('Done!')
+
                                
         '''
         if self.opts.checkpoint_path is not None and os.path.exists(self.opts.checkpoint_path):
