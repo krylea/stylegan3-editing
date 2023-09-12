@@ -48,8 +48,8 @@ argstring="$argstring \
 --encoder_type ProgressiveBackboneEncoder \
 --input_nc 6 \
 --n_styles 18 \
---reference_size 1 2 \
---candidate_size 1 2 \
+--reference_size 4 7 \
+--candidate_size 1 4 \
 --d_latent 128 \
 --g_latent 512 \
 --g_attn_layers 2 \
@@ -57,10 +57,11 @@ argstring="$argstring \
 --exp_name $EXP_NAME \
 --restyle_mode encoder \
 --restyle_iters 1 \
---step_interval 100 \
+--step_interval 500 \
 --freeze_encoder \
 --freeze_decoder \
---use_setgan"
+--use_setgan    \
+--use_pretrained"
 
 if [[ -n $ckpt ]]
 then

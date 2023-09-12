@@ -30,5 +30,7 @@ model_paths = {
     # encoders and decoders
     'stylegan_xl_face_256_encoder': 'experiments/test-ffhq-1/checkpoint.pt',
     'stylegan_xl_face_256': '../stylegan-xl/pretrained_models/ffhq256.pkl',
+    'stylegan_xl_vggface_256_encoder': 'experiments/vggface_sg3_256_1.pt',
+    'stylegan_xl_vggface_256': '../stylegan-xl/training-runs/vggface/vggface_sg3_256/best_model.pkl',
 
 }
