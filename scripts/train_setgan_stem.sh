@@ -60,7 +60,8 @@ argstring="$argstring \
 --step_interval 200 \
 --encoder_res -1 \
 --use_setgan \
---no_mean_center"
+--no_mean_center \
+--warmup_steps 1000000"
 
 
 if [[ -n $ckpt ]]
