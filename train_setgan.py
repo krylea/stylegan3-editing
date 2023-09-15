@@ -392,6 +392,7 @@ def init_sgxl_args(opts, c):
 @click.option('--use_pretrained', is_flag=True)
 @click.option('--no_mean_center', is_flag=True)
 @click.option('--encoder_res', type=int, default=-1)
+@click.option('--warmup_steps', type=int, default=-1)
 
 def main(**kwargs):
     # Initialize config.
@@ -431,6 +432,7 @@ def main(**kwargs):
     c.candidate_size = opts.candidate_size
 
     c.step_interval = opts.step_interval
+    c.warmup_steps = opts.warmup_steps
 
 
     # Sanity checks.

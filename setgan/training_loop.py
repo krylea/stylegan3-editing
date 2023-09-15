@@ -166,7 +166,8 @@ def training_loop(
     candidate_size          = (1,4),
     eval_metric             = 'fid-agg',
     step_interval           = STEP_INTERVAL,
-    downsample_res          = -1
+    downsample_res          = -1,
+    warmup_steps=-1
 ):
     # Initialize.
     start_time = time.time()
@@ -303,6 +304,9 @@ def training_loop(
         if rank == 0:
             phase.start_event = torch.cuda.Event(enable_timing=True)
             phase.end_event = torch.cuda.Event(enable_timing=True)
+        
+        if warmup_steps > 0:
+            phase.scheduler = torch.optim.lr_scheduler.LinearLR(phase.opt, start_factor=1./warmup_steps, total_iters=warmup_steps)
 
     # Export sample images.
     if rank == 0:
@@ -446,6 +450,9 @@ def training_loop(
                     for param, grad in zip(params, grads):
                         param.grad = grad.reshape(param.shape)
                 phase.opt.step()
+            
+            if warmup_steps > 0:
+                phase.scheduler.step()
 
             # Phase done.
             if phase.end_event is not None:
