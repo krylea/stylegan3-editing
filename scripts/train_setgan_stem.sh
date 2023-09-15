@@ -3,12 +3,14 @@
 #SBATCH --output=logs/slurm-%j.txt
 #SBATCH --open-mode=append
 #SBATCH --ntasks=1
+#SBATCH --account=deadline
+#SBATCH --qos=deadline
 #SBATCH --gres=gpu:4
 #SBATCH --partition=a40
 #SBATCH --cpus-per-gpu=1
 #SBATCH --mem=50GB
 
-BATCH_PER_GPU=2
+BATCH_PER_GPU=4
 
 RES=$1
 DATASET_NAME=$2
@@ -46,8 +48,8 @@ fi
 
 argstring="$argstring \
 --input_nc 3 \
---reference_size 1 2 \
---candidate_size 1 2 \
+--reference_size 4 7 \
+--candidate_size 1 4 \
 --d_latent 128 \
 --g_latent 512 \
 --g_attn_layers 2 \
@@ -55,9 +57,10 @@ argstring="$argstring \
 --exp_name $EXP_NAME \
 --restyle_mode none \
 --restyle_iters 1 \
---step_interval 100 \
---encoder_res 256 \
---use_setgan"
+--step_interval 200 \
+--encoder_res -1 \
+--use_setgan \
+--no_mean_center"
 
 
 if [[ -n $ckpt ]]

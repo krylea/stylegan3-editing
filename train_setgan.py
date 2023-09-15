@@ -163,6 +163,7 @@ def init_setgan_args(opts, c):
     c.G_kwargs.restyle_iters = opts.restyle_iters
     c.G_kwargs.freeze_encoder = opts.freeze_encoder
     c.G_kwargs.freeze_decoder = opts.freeze_decoder
+    c.G_kwargs.mean_center = not opts.no_mean_center
 
     if opts.dataset_name == 'imagenet':
         c.G_kwargs.encoder_type='ResNetProgressiveBackboneEncoder'
@@ -389,6 +390,7 @@ def init_sgxl_args(opts, c):
 @click.option('--freeze_encoder', is_flag=True)
 @click.option('--freeze_decoder', is_flag=True)
 @click.option('--use_pretrained', is_flag=True)
+@click.option('--no_mean_center', is_flag=True)
 @click.option('--encoder_res', type=int, default=-1)
 
 def main(**kwargs):
