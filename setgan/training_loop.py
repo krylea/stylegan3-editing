@@ -306,7 +306,8 @@ def training_loop(
             phase.end_event = torch.cuda.Event(enable_timing=True)
         
         if warmup_steps > 0:
-            phase.scheduler = torch.optim.lr_scheduler.LinearLR(phase.opt, start_factor=1./warmup_steps, total_iters=warmup_steps)
+            warmup_batches = warmup_steps / batch_size
+            phase.scheduler = torch.optim.lr_scheduler.LinearLR(phase.opt, start_factor=1./warmup_batches, total_iters=warmup_batches)
 
     # Export sample images.
     if rank == 0:
