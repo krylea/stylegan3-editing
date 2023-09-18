@@ -211,6 +211,7 @@ def init_setgan_args(opts, c):
     c.G_kwargs.decoder_kwargs.img_resolution = opts.resolution
     c.G_kwargs.decoder_kwargs.img_channels = 3
 
+    c.G_kwargs.use_pretrained = opts.use_pretrained
     if opts.use_pretrained:
         c.G_kwargs.encoder_ckpt = model_paths['stylegan_xl_%s_%d_encoder' % (opts.dataset_name, opts.resolution)]
         c.G_kwargs.decoder_ckpt = model_paths['stylegan_xl_%s_%d' % (opts.dataset_name, opts.resolution)]

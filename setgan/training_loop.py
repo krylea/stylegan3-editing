@@ -249,6 +249,8 @@ def training_loop(
         G.reinit_stem()
         G_ema.reinit_stem()
 
+    G.freeze_params()
+
     # Print network summary tables.
     '''
     if rank == 0:

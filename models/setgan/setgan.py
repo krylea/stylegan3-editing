@@ -93,22 +93,25 @@ class SetGAN(nn.Module):
 
         self.mean_center = opts.mean_center
 
-        if True:
-            for parameter in self.decoder.mapping.parameters():
-                parameter.requires_grad_(False)
-
-        if opts.freeze_encoder:
-            for parameter in self.encoder.parameters():
-                parameter.requires_grad_(False)
-
-        if opts.freeze_decoder:
-            for parameter in self.decoder.parameters():
-                parameter.requires_grad_(False)
+        self.freeze_params()
 
         self.update_latent_avg()
 
         if self.opts.restyle_mode == 'encoder':
             self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.avg_image, self.opts.n_styles, iters=self.opts.restyle_iters)
+
+    def freeze_params(self):
+        if self.opts.use_pretrained:
+            for parameter in self.decoder.mapping.parameters():
+                parameter.requires_grad_(False)
+
+            if self.opts.freeze_encoder:
+                for parameter in self.encoder.parameters():
+                    parameter.requires_grad_(False)
+
+            if self.opts.freeze_decoder:
+                for parameter in self.decoder.parameters():
+                    parameter.requires_grad_(False)
 
     def update_latent_avg(self):
         self.latent_avg = self.decoder.mapping.w_avg.cpu()
