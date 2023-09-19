@@ -155,7 +155,7 @@ def training_loop(
     total_kimg              = 25000,    # Total length of the training, measured in thousands of real images.
     kimg_per_tick           = 4,        # Progress snapshot interval.
     image_snapshot_ticks    = 50,       # How often to save image snapshots? None = disable.
-    network_snapshot_ticks  = 50,       # How often to save network snapshots? None = disable.
+    network_snapshot_ticks  = 1,       # How often to save network snapshots? None = disable.
     resume_pkl              = None,     # Network pickle to resume training from.
     resume_kimg             = 0,        # First kimg to report when resuming training.
     cudnn_benchmark         = True,     # Enable torch.backends.cudnn.benchmark?
@@ -167,7 +167,8 @@ def training_loop(
     eval_metric             = 'fid-agg',
     step_interval           = STEP_INTERVAL,
     downsample_res          = -1,
-    warmup_steps=-1
+    warmup_steps            = -1,
+    eval_ticks              = 10
 ):
     # Initialize.
     start_time = time.time()
@@ -589,7 +590,8 @@ def training_loop(
         # Evaluate metrics.
         # if (snapshot_data is not None) and (len(metrics) > 0):
         
-        if cur_tick and (snapshot_data is not None) and (len(metrics) > 0):
+        if cur_tick and (snapshot_data is not None) and (len(metrics) > 0) and (
+                done or cur_tick % eval_ticks == 0):
             if rank == 0:
                 print('Evaluating metrics...')
             for metric in all_metrics.metrics:
