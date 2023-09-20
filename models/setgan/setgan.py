@@ -109,6 +109,8 @@ class SetGAN(nn.Module):
         if not self.opts.freeze_decoder:
             self.decoder.synthesis.requires_grad_(flag)
 
+        return self
+
 
     def freeze_params(self):
         if self.opts.use_pretrained:
