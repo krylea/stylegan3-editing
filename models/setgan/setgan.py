@@ -100,6 +100,16 @@ class SetGAN(nn.Module):
         if self.opts.restyle_mode == 'encoder':
             self.encoder = Restyle(self.encoder, self.decoder, self.latent_avg, self.avg_image, self.opts.n_styles, iters=self.opts.restyle_iters)
 
+    def requires_grad_(self, flag):
+        self.style_attn.requires_grad_(flag)
+
+        if not self.opts.freeze_encoder:
+            self.encoder.requires_grad_(flag)
+
+        if not self.opts.freeze_decoder:
+            self.decoder.synthesis.requires_grad_(flag)
+
+
     def freeze_params(self):
         if self.opts.use_pretrained:
             for parameter in self.decoder.mapping.parameters():
@@ -110,7 +120,7 @@ class SetGAN(nn.Module):
                     parameter.requires_grad_(False)
 
             if self.opts.freeze_decoder:
-                for parameter in self.decoder.parameters():
+                for parameter in self.decoder.synthesis.parameters():
                     parameter.requires_grad_(False)
 
     def update_latent_avg(self):
